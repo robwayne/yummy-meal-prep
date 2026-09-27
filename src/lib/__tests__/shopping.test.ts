@@ -46,19 +46,23 @@ describe("runningLow", () => {
 
     const low = runningLow(getDb());
     expect(low.map((l) => [l.name, l.kind])).toEqual([["eggs", "out"], ["spinach", "out"], ["rice", "low"]]);
-    expect(low.find((l) => l.name === "rice")).toMatchObject({ reason: "0.8 kg left · low at 1 kg", quantity: 4, unit: "kg" });
+    expect(low.find((l) => l.name === "rice")).toMatchObject({ reason: "0.8 kg left · low below 1 kg", quantity: 4, unit: "kg" });
     expect(low.find((l) => l.name === "eggs")).toMatchObject({ reason: "Ran out today", quantity: 6 });
   });
 
   it("uses your own threshold, in any compatible unit, and 0 means only when out", () => {
-    bulk("4 kg rice\n1 bottle fish sauce");
-    expect(runningLow(getDb()).map((l) => l.name)).toEqual(["fish sauce"]); // 1 ≤ 1 by default
+    bulk("4 kg rice\n1 bottle fish sauce\n0.5 bottle mirin");
+    // Exactly 1 is not low; below 1 is.
+    expect(runningLow(getDb()).map((l) => l.name)).toEqual(["mirin"]);
 
-    setLowThreshold("fish sauce", 0, "bottle");
+    setLowThreshold("mirin", 0, "bottle");
     setLowThreshold("Rice", 5000, "g");
     const low = runningLow(getDb());
-    expect(low.map((l) => [l.name, l.reason])).toEqual([["rice", "4 kg left · low at 5000 g"]]);
+    expect(low.map((l) => [l.name, l.reason])).toEqual([["rice", "4 kg left · low below 5000 g"]]);
     expect(lowThreshold(getDb(), { name: "rice", unit: "kg" })).toEqual({ quantity: 5000, unit: "g", custom: true });
+
+    setLowThreshold("rice", 4, "kg");
+    expect(runningLow(getDb())).toEqual([]); // 4 kg is not below 4 kg
 
     setLowThreshold("rice", undefined, "kg");
     expect(lowThreshold(getDb(), { name: "rice", unit: "kg" })).toEqual({ quantity: 1, unit: "kg", custom: false });

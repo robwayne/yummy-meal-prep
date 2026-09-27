@@ -43,7 +43,7 @@ export function usualPurchase(events: InventoryEvent[], name: string): { quantit
 
 /**
  * Items to restock:
- * - low: at or below its low level (yours, or 1 of its unit);
+ * - low: below its low level (yours, or 1 of its unit);
  * - expired: past its date (it's excluded from recommendations);
  * - out: used up or tossed in the last 60 days and not back in stock.
  */
@@ -52,18 +52,18 @@ export function isVital(db: Database, name: string): boolean {
   return (db.settings.vital ?? []).some((v) => normalizeName(v) === key);
 }
 
-/** The level at or below which an item counts as low: yours, or 1 of the item's unit. */
+/** The level below which an item counts as low: yours, or 1 of the item's unit. */
 export function lowThreshold(db: Database, item: { name: string; unit: string }): { quantity: number; unit: string; custom: boolean } {
   const custom = db.settings.lowAt?.[normalizeName(item.name)];
   if (custom && convert(1, item.unit, custom.unit) !== undefined) return { ...custom, custom: true };
   return { quantity: 1, unit: item.unit, custom: false };
 }
 
-/** Is this inventory item at or below its low level? */
+/** Is this inventory item below its low level? (Exactly at the level is not low.) */
 export function isLow(db: Database, item: InventoryItem): boolean {
   const t = lowThreshold(db, item);
   const have = convert(item.quantity, item.unit, t.unit) ?? item.quantity;
-  return have <= t.quantity + 1e-9;
+  return have < t.quantity - 1e-9;
 }
 
 export function runningLow(db: Database, now = new Date()): LowItem[] {
@@ -86,7 +86,7 @@ export function runningLow(db: Database, now = new Date()): LowItem[] {
       out.push({
         ...base,
         kind: "low",
-        reason: `${fmt(item.quantity)}${unit(item.unit)} left · low at ${fmt(t.quantity)}${unit(t.unit)}`,
+        reason: `${fmt(item.quantity)}${unit(item.unit)} left · low below ${fmt(t.quantity)}${unit(t.unit)}`,
         quantity: usual?.quantity,
       });
       seen.add(key);

@@ -199,8 +199,8 @@ export function GroceriesView() {
         </div>
         {low.length === 0 ? (
           <p className="text-sm text-stone-500">
-            Nothing is running low. Items show up here when they reach their &ldquo;low at&rdquo; level (1 of their unit unless
-            you change it), or once you use something up.
+            Nothing is running low. Items show up here when they drop below their &ldquo;low below&rdquo; level (1 of their unit
+            unless you change it), or once you use something up.
           </p>
         ) : (
           <ul className="divide-y divide-stone-100 dark:divide-stone-800">

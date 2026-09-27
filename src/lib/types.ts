@@ -108,7 +108,7 @@ export type Settings = {
   vital?: string[];
   /**
    * Per-product "low" level, keyed by normalised product name. Without one, an
-   * item is low at 1 of its own unit.
+   * item is low below 1 of its own unit.
    */
   lowAt?: Record<string, { quantity: number; unit: string }>;
 };

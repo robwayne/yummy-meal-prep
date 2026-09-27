@@ -8,7 +8,7 @@ type Threshold = { quantity: number; unit: string; custom: boolean };
 
 const u = (unit: string) => (unit && unit !== "pcs" ? ` ${unit}` : "");
 
-/** "low at 1 kg" — tap to change when this product counts as running low. */
+/** "low below 1 kg" — tap to change when this product counts as running low. */
 export function LowAtEditor({ name, unit, threshold }: { name: string; unit: string; threshold: Threshold }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(String(threshold.quantity));
@@ -24,7 +24,7 @@ export function LowAtEditor({ name, unit, threshold }: { name: string; unit: str
         className="text-xs text-stone-500 underline decoration-dotted underline-offset-2"
         title="Change when this counts as running low"
       >
-        {threshold.quantity === 0 ? "low only when out" : `low at ${threshold.quantity}${u(threshold.unit)}`}
+        {threshold.quantity === 0 ? "low only when out" : `low below ${threshold.quantity}${u(threshold.unit)}`}
         {!threshold.custom && " (default)"}
       </button>
     );
@@ -44,7 +44,7 @@ export function LowAtEditor({ name, unit, threshold }: { name: string; unit: str
         save(value.trim() === "" || !Number.isFinite(n) ? undefined : n);
       }}
     >
-      <label htmlFor={`low-${name}`} className="text-stone-500">Low at</label>
+      <label htmlFor={`low-${name}`} className="text-stone-500">Low below</label>
       <input
         id={`low-${name}`}
         type="number"

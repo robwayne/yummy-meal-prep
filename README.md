@@ -26,7 +26,7 @@ A personal recipe book, kitchen inventory and meal recommender, built with **Nex
   - Pick a focus for the week (**High protein, More veggies, High fibre, Low carb**, or **Balanced**) and optionally a diet (**Pescatarian, Vegetarian**). It lasts 7 days or until you change it, and all recommendations follow it.
   - Recipes missing a food group suggest a side from your kitchen to round out the plate.
 - **Groceries** (Shop tab)
-  - **Inventory running low**: anything at or below its "low at" level (1 of its unit by default; tap to change per product, 0 = only when out), used up recently, or expired.
+  - **Inventory running low**: anything below its "low below" level (1 of its unit by default, so exactly 1 kg isn't low; tap to change per product, 0 = only when out), used up recently, or expired.
   - **Vital items** (☆ on any item): never-run-out products, always shown and flagged at the top when low or out, with an alert on Home.
   - **Recommended for recipes**: missing ingredients for meals you're close to making, ranked by how many dishes each unlocks.
   - **My list**: add suggestions or your own items, tick them off in the store, then add ticked items to your inventory in one tap.
