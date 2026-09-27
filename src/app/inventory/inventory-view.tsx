@@ -12,6 +12,7 @@ import { LOCATION_LABELS, LOCATIONS, type Location } from "@/lib/types";
 
 import { AddItemPanel } from "./add-item-panel";
 import { ItemRow } from "./item-row";
+import { TransferPanel } from "./transfer-panel";
 
 export function InventoryView() {
   const sp = useSearchParams();
@@ -55,6 +56,8 @@ export function InventoryView() {
       </div>
 
       <AddItemPanel key={defaults.name ?? ""} defaults={defaults} suggestions={suggestions} />
+
+      <TransferPanel items={db.inventory} />
 
       {expired.length > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm dark:border-red-900 dark:bg-red-950/40">

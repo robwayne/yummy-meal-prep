@@ -5,6 +5,7 @@
 import { z } from "zod";
 
 import { convert, normalizeName, normalizeUnit, parseIngredientLines } from "./ingredients";
+import { parseInventoryText } from "./inventory-io";
 import { todayIso } from "./recommend";
 import { isDatabase, migrateDatabase, newId } from "./database";
 import { mutate, replaceDb } from "./store";
@@ -113,7 +114,8 @@ export function addItem(_prev: ActionState, formData: FormData): ActionState {
 export function addItemsBulk(_prev: ActionState, formData: FormData): ActionState {
   const parsed = bulkSchema.safeParse(fields(formData));
   if (!parsed.success) return fail(parsed.error);
-  const lines = parseIngredientLines(parsed.data.lines);
+  // Lines may carry their own "| location | date" (as produced by "Copy list").
+  const lines = parseInventoryText(parsed.data.lines);
   if (!lines.length) return { ok: false, errors: { lines: ["Couldn't read any items"] } };
   mutate((db) => {
     for (const l of lines) {
@@ -121,8 +123,8 @@ export function addItemsBulk(_prev: ActionState, formData: FormData): ActionStat
         name: l.name,
         quantity: l.quantity && l.quantity > 0 ? l.quantity : 1,
         unit: normalizeUnit(l.unit),
-        location: parsed.data.location,
-        expiresOn: parsed.data.expiresOn,
+        location: l.location ?? parsed.data.location,
+        expiresOn: l.expiresOn ?? parsed.data.expiresOn,
         notes: l.note,
       });
     }
@@ -172,6 +174,36 @@ export function consumeItem(id: string, _prev: ActionState, formData: FormData):
   });
   if (!name) return { ok: false, message: "That item no longer exists" };
   return { ok: true, message: `Used some ${name}` };
+}
+
+/**
+ * Import a saved inventory text file (or any pasted list).
+ * "merge" adds the items on top of what's there (topping up matches);
+ * "replace" first clears the current inventory. Both are logged in history.
+ */
+export function importInventory(text: string, mode: "merge" | "replace"): ActionState {
+  const lines = parseInventoryText(text);
+  if (!lines.length) return { ok: false, message: "Couldn't find any items in that file" };
+  mutate((db) => {
+    if (mode === "replace") {
+      for (const item of db.inventory) {
+        logEvent(db, item, { type: "removed", quantityDelta: -item.quantity, quantityAfter: 0, note: "Replaced by import" });
+      }
+      db.inventory = [];
+    }
+    for (const l of lines) {
+      addStock(db, {
+        name: l.name,
+        quantity: l.quantity && l.quantity > 0 ? l.quantity : 1,
+        unit: normalizeUnit(l.unit),
+        location: l.location ?? "other",
+        expiresOn: l.expiresOn,
+        notes: l.note,
+      });
+    }
+  });
+  const n = `${lines.length} item${lines.length === 1 ? "" : "s"}`;
+  return { ok: true, message: mode === "replace" ? `Replaced your inventory with ${n}` : `Imported ${n}` };
 }
 
 /** Remove an item entirely, recording why (thrown out because it expired, or just removed). */

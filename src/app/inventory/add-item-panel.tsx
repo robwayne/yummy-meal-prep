@@ -96,7 +96,8 @@ function BulkForm() {
           required
         />
         <p className="mt-1 text-xs text-stone-500">
-          Quantities and units are optional — &ldquo;milk&rdquo; is counted as 1. Great for unpacking groceries.
+          Quantities and units are optional — &ldquo;milk&rdquo; is counted as 1. Great for unpacking groceries, or pasting
+          back a copied inventory list (lines with their own &ldquo;| fridge | date&rdquo; keep them).
         </p>
         <FieldError state={state} name="lines" />
       </div>
