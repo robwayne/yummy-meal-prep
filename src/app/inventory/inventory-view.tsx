@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { Loading } from "@/components/page-state";
 import { discardAllExpired } from "@/lib/actions";
 import { freshness } from "@/lib/recommend";
+import { isLow, isVital, lowThreshold } from "@/lib/shopping";
 import { useDb } from "@/lib/store";
 import { LOCATION_LABELS, LOCATIONS, type Location } from "@/lib/types";
 
@@ -92,7 +93,14 @@ export function InventoryView() {
                 </h2>
                 <ul className="divide-y divide-stone-100 dark:divide-stone-800">
                   {here.map((item) => (
-                    <ItemRow key={item.id} item={item} soonDays={soonDays} />
+                    <ItemRow
+                      key={item.id}
+                      item={item}
+                      soonDays={soonDays}
+                      vital={isVital(db, item.name)}
+                      low={isLow(db, item)}
+                      threshold={lowThreshold(db, item)}
+                    />
                   ))}
                 </ul>
               </section>

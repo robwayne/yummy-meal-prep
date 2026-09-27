@@ -2,9 +2,10 @@
 
 import { useActionState, useState } from "react";
 
-import { consumeItem, discardItem, updateItem, type ActionState } from "@/lib/actions";
+import { consumeItem, discardItem, toggleVital, updateItem, type ActionState } from "@/lib/actions";
 import { ExpiryBadge } from "@/components/badges";
 import { FieldError, SubmitButton } from "@/components/form";
+import { LowAtEditor } from "@/components/low-at-editor";
 import { formatQuantity } from "@/lib/ingredients";
 import { LOCATION_LABELS, LOCATIONS, type InventoryItem } from "@/lib/types";
 
@@ -96,18 +97,42 @@ function EditForm({ item, onDone }: { item: InventoryItem; onDone: () => void })
   );
 }
 
-export function ItemRow({ item, soonDays }: { item: InventoryItem; soonDays: number }) {
+export function ItemRow({
+  item,
+  soonDays,
+  vital,
+  low,
+  threshold,
+}: {
+  item: InventoryItem;
+  soonDays: number;
+  vital: boolean;
+  low: boolean;
+  threshold: { quantity: number; unit: string; custom: boolean };
+}) {
   const [mode, setMode] = useState<"view" | "use" | "edit">("view");
   return (
     <li className="py-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <div className="w-full min-w-0 sm:w-auto sm:flex-1">
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => toggleVital(item.name)}
+              aria-pressed={vital}
+              aria-label={vital ? `Unmark ${item.name} as vital` : `Mark ${item.name} as vital`}
+              title={vital ? "Vital — tap to unmark" : "Mark as vital (never run out)"}
+              className={`-ml-1 px-1 text-lg leading-none ${vital ? "text-red-600" : "text-stone-300 dark:text-stone-600"}`}
+            >
+              {vital ? "★" : "☆"}
+            </button>
             <span className="font-medium">{item.name}</span>
             <span className="text-sm text-stone-500">{formatQuantity(item.quantity, item.unit) || item.quantity}</span>
             <ExpiryBadge item={item} soonDays={soonDays} />
+            {low && <span className={`badge ${vital ? "bg-red-600 text-white" : "badge-amber"}`}>Low</span>}
           </div>
           {item.notes && <p className="text-xs text-stone-500">{item.notes}</p>}
+          <LowAtEditor name={item.name} unit={item.unit} threshold={threshold} />
         </div>
         {mode === "view" && (
           <div className="flex flex-wrap gap-1.5">

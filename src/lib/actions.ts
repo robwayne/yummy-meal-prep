@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { convert, normalizeName, normalizeUnit, parseIngredientLines } from "./ingredients";
 import { parseInventoryText } from "./inventory-io";
+import { usualPurchase } from "./shopping";
 import { todayIso } from "./recommend";
 import { isDatabase, migrateDatabase, newId } from "./database";
 import { mutate, replaceDb } from "./store";
@@ -407,5 +408,120 @@ export function setMealPlan(focus: Focus, diet: Diet, duration: "week" | "ongoin
   mutate((db) => {
     db.settings.plan =
       focus === "balanced" && diet === "everything" ? undefined : { focus, diet, until, setOn: today };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Grocery list
+
+export type NewListItem = { name: string; quantity?: number; unit?: string; location?: Location; reason?: string };
+
+/** Add items to the grocery list, skipping anything already on it (unticked). */
+export function addToShoppingList(items: NewListItem[]): number {
+  return mutate((db) => {
+    const list = (db.shoppingList ??= []);
+    let added = 0;
+    for (const i of items) {
+      const name = i.name.trim();
+      if (!name) continue;
+      const key = normalizeName(name);
+      if (list.some((x) => !x.done && normalizeName(x.name) === key)) continue;
+      list.push({ id: newId(), ...i, name, done: false, addedAt: new Date().toISOString() });
+      added++;
+    }
+    return added;
+  });
+}
+
+/** Add a free-typed line ("2 lb chicken wings") to the list. */
+export function addListLine(_prev: ActionState, formData: FormData): ActionState {
+  const line = String(formData.get("line") ?? "");
+  const parsed = parseInventoryText(line)[0];
+  if (!parsed) return { ok: false, errors: { line: ["Type an item"] } };
+  const added = addToShoppingList([
+    { name: parsed.name, quantity: parsed.quantity, unit: parsed.unit ? normalizeUnit(parsed.unit) : undefined, location: parsed.location },
+  ]);
+  return added ? { ok: true, message: `Added ${parsed.name}` } : { ok: false, message: `${parsed.name} is already on your list` };
+}
+
+export function toggleShoppingItem(id: string): void {
+  mutate((db) => {
+    const item = db.shoppingList?.find((i) => i.id === id);
+    if (item) item.done = !item.done;
+  });
+}
+
+export function removeShoppingItem(id: string): void {
+  mutate((db) => {
+    db.shoppingList = (db.shoppingList ?? []).filter((i) => i.id !== id);
+  });
+}
+
+/**
+ * Put every ticked item into the inventory and take it off the list. Amount,
+ * unit and place default to what you usually buy (from history), else 1.
+ */
+export function addTickedToInventory(): ActionState {
+  const count = mutate((db) => {
+    const ticked = (db.shoppingList ?? []).filter((i) => i.done);
+    for (const i of ticked) {
+      const usual = usualPurchase(db.events, i.name);
+      addStock(db, {
+        name: i.name,
+        quantity: i.quantity && i.quantity > 0 ? i.quantity : (usual?.quantity ?? 1),
+        unit: normalizeUnit(i.quantity ? i.unit : (i.unit ?? usual?.unit)),
+        location: i.location ?? usual?.location ?? "pantry",
+        expiresOn: undefined,
+        notes: undefined,
+      });
+    }
+    db.shoppingList = (db.shoppingList ?? []).filter((i) => !i.done);
+    return ticked.length;
+  });
+  if (!count) return { ok: false, message: "Tick the items you bought first" };
+  return { ok: true, message: `Added ${count} item${count === 1 ? "" : "s"} to your inventory` };
+}
+
+// ---------------------------------------------------------------------------
+// Vital items
+
+/** Mark or unmark a product as vital (never run out). */
+export function toggleVital(name: string): void {
+  const key = normalizeName(name);
+  mutate((db) => {
+    const vital = db.settings.vital ?? [];
+    db.settings.vital = vital.some((v) => normalizeName(v) === key)
+      ? vital.filter((v) => normalizeName(v) !== key)
+      : [...vital, name.trim()];
+  });
+}
+
+/** Add vital products from a comma- or line-separated list. */
+export function addVital(_prev: ActionState, formData: FormData): ActionState {
+  const names = String(formData.get("names") ?? "")
+    .split(/[,\n]/)
+    .map((n) => n.trim())
+    .filter(Boolean);
+  if (!names.length) return { ok: false, errors: { names: ["Type an item"] } };
+  const added = mutate((db) => {
+    const vital = (db.settings.vital ??= []);
+    const fresh = names.filter((n) => !vital.some((v) => normalizeName(v) === normalizeName(n)));
+    vital.push(...fresh);
+    return fresh.length;
+  });
+  return { ok: true, message: added ? `Marked ${added} as vital` : "Already vital" };
+}
+
+/**
+ * Set when a product counts as low, in `unit`. An empty value goes back to the
+ * default (1 of the item's unit); 0 means "only when it runs out".
+ */
+export function setLowThreshold(name: string, quantity: number | undefined, unit: string): void {
+  const key = normalizeName(name);
+  mutate((db) => {
+    const lowAt = { ...(db.settings.lowAt ?? {}) };
+    if (quantity === undefined || !Number.isFinite(quantity) || quantity < 0) delete lowAt[key];
+    else lowAt[key] = { quantity, unit: normalizeUnit(unit) };
+    db.settings.lowAt = lowAt;
   });
 }

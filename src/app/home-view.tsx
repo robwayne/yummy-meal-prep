@@ -8,6 +8,7 @@ import { RecipeCard } from "@/components/recipe-card";
 import { formatDateTime } from "@/lib/format";
 import { Loading } from "@/components/page-state";
 import { contextFor, freshness, recommend, topPicks } from "@/lib/recommend";
+import { runningLow } from "@/lib/shopping";
 import { useDb } from "@/lib/store";
 
 export function HomeView() {
@@ -17,6 +18,7 @@ export function HomeView() {
   const soonDays = db.settings.expiringSoonDays;
   const recs = recommend(contextFor(db));
   const top = topPicks(recs);
+  const vitalLow = runningLow(db).filter((l) => l.vital);
   const attention = db.inventory
     .filter((i) => {
       const f = freshness(i, soonDays);
@@ -48,6 +50,18 @@ export function HomeView() {
           </Link>
         </div>
       </section>
+
+      {vitalLow.length > 0 && (
+        <Link
+          href="/groceries"
+          className="flex items-center justify-between gap-3 rounded-xl border-2 border-red-300 bg-red-50 p-4 text-sm text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200"
+        >
+          <span>
+            <strong>‼️ Running low on vital items:</strong> {vitalLow.map((l) => l.name).join(", ")}
+          </span>
+          <span className="shrink-0 font-medium">Shop →</span>
+        </Link>
+      )}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {stats.map((s) => (

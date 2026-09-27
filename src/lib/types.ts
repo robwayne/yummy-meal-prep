@@ -104,6 +104,27 @@ export type Settings = {
   /** Items expiring within this many days are flagged and prioritised. */
   expiringSoonDays: number;
   plan?: MealPlan;
+  /** Products you never want to run out of; flagged early and always shown when low. */
+  vital?: string[];
+  /**
+   * Per-product "low" level, keyed by normalised product name. Without one, an
+   * item is low at 1 of its own unit.
+   */
+  lowAt?: Record<string, { quantity: number; unit: string }>;
+};
+
+/** An item on the grocery list. */
+export type ShoppingListItem = {
+  id: string;
+  name: string;
+  quantity?: number;
+  unit?: string;
+  /** Where it goes when bought. */
+  location?: Location;
+  /** Why it's on the list, e.g. "Running low" or "For Beef Chili". */
+  reason?: string;
+  done: boolean;
+  addedAt: string;
 };
 
 export type Database = {
@@ -114,5 +135,7 @@ export type Database = {
   events: InventoryEvent[];
   recipes: Recipe[];
   cookLog: CookLogEntry[];
+  /** Optional so older saved data still loads. */
+  shoppingList?: ShoppingListItem[];
   settings: Settings;
 };

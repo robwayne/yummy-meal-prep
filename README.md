@@ -25,6 +25,11 @@ A personal recipe book, kitchen inventory and meal recommender, built with **Nex
   - Meat or seafood is preferred as the main protein, especially meat you already have in stock ("Uses your chicken").
   - Pick a focus for the week (**High protein, More veggies, High fibre, Low carb**, or **Balanced**) and optionally a diet (**Pescatarian, Vegetarian**). It lasts 7 days or until you change it, and all recommendations follow it.
   - Recipes missing a food group suggest a side from your kitchen to round out the plate.
+- **Groceries** (Shop tab)
+  - **Inventory running low**: anything at or below its "low at" level (1 of its unit by default; tap to change per product, 0 = only when out), used up recently, or expired.
+  - **Vital items** (☆ on any item): never-run-out products, always shown and flagged at the top when low or out, with an alert on Home.
+  - **Recommended for recipes**: missing ingredients for meals you're close to making, ranked by how many dishes each unlocks.
+  - **My list**: add suggestions or your own items, tick them off in the store, then add ticked items to your inventory in one tap.
 - **Recipe book**: comes with 32 starter recipes, including balanced meat and seafood plates. You can add your own, edit or delete them, search by name, cuisine, tag or ingredient, favourite them and rate them.
   - Each recipe shows which ingredients you have, which you're short on and which are missing.
   - **"I cooked this"** takes the ingredients out of your inventory, with unit conversion and soonest-expiring stock used first. You can adjust the amounts before saving.
@@ -80,6 +85,7 @@ src/
     database.ts        empty/seeded database, backup validation
     ingredients.ts     line parser, name normalisation, matching, unit conversion
     recommend.ts       scoring, buckets, shopping list, similarity, cooking deductions
+    shopping.ts        running low, low thresholds, vital items, recipe groceries
     nutrition.ts       food groups, plate balance, weekly focus & diet scoring, side suggestions
     history.ts         per-product history roll-up
     seed-recipes.ts    starter recipe book
