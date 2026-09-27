@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 
-import { createDatabase, isDatabase } from "./database";
+import { createDatabase, isDatabase, migrateDatabase } from "./database";
 import type { Database } from "./types";
 
 /**
@@ -38,7 +38,10 @@ function load(): Database {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed: unknown = JSON.parse(raw);
-        if (isDatabase(parsed)) return parsed;
+        if (isDatabase(parsed)) {
+          if (migrateDatabase(parsed)) save(parsed);
+          return parsed;
+        }
       }
     } catch (err) {
       console.error("Couldn't read browser storage; starting fresh", err);

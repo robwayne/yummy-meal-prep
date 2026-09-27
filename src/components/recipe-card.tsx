@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { totalMinutes } from "@/lib/format";
+import { GROUP_INFO, recipeBalance, type Balance, type FoodGroup } from "@/lib/nutrition";
 import type { RecipeMatch } from "@/lib/recommend";
 import type { Recipe } from "@/lib/types";
 
@@ -18,6 +19,36 @@ export function MatchBar({ match }: { match: RecipeMatch }) {
       <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-stone-200 dark:bg-stone-800">
         <div className={`h-full ${color}`} style={{ width: `${pct}%` }} />
       </div>
+    </div>
+  );
+}
+
+const GROUPS: FoodGroup[] = ["protein", "veg", "carb", "fat", "fiber"];
+
+/** Five food-group pills: filled when the recipe has it, faded when it doesn't. */
+export function BalanceRow({ balance }: { balance: Balance }) {
+  const main = balance.mainProtein;
+  return (
+    <div className="flex flex-wrap items-center gap-1" aria-label="Plate balance">
+      {GROUPS.map((g) => {
+        const has = balance.groups[g].length > 0;
+        const label =
+          g === "protein" && main
+            ? main.ingredient.name
+            : g === "veg" && balance.rawVeg
+              ? "Veg · raw"
+              : GROUP_INFO[g].label;
+        return (
+          <span
+            key={g}
+            title={has ? `${GROUP_INFO[g].label}: ${balance.groups[g].map((i) => i.name).join(", ")}` : `No ${GROUP_INFO[g].label.toLowerCase()}`}
+            className={`badge gap-1 ${has ? "badge-green" : "bg-transparent text-stone-400 line-through decoration-stone-300 dark:text-stone-600"}`}
+          >
+            <span aria-hidden>{GROUP_INFO[g].icon}</span>
+            <span className="max-w-24 truncate">{label}</span>
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -43,6 +74,7 @@ export function RecipeCard({ recipe, match }: { recipe: Recipe; match?: RecipeMa
           <span key={t} className="badge badge-muted">#{t}</span>
         ))}
       </div>
+      <BalanceRow balance={match?.balance ?? recipeBalance(recipe)} />
       {match && (
         <div className="mt-auto space-y-2">
           <MatchBar match={match} />

@@ -3,10 +3,11 @@
 import Link from "next/link";
 
 import { ExpiryBadge } from "@/components/badges";
+import { FocusSummary } from "@/components/focus-picker";
 import { RecipeCard } from "@/components/recipe-card";
 import { formatDateTime } from "@/lib/format";
 import { Loading } from "@/components/page-state";
-import { freshness, recommend } from "@/lib/recommend";
+import { contextFor, freshness, recommend, topPicks } from "@/lib/recommend";
 import { useDb } from "@/lib/store";
 
 export function HomeView() {
@@ -14,14 +15,8 @@ export function HomeView() {
   if (!db) return <Loading />;
 
   const soonDays = db.settings.expiringSoonDays;
-  const recs = recommend({
-    inventory: db.inventory,
-    staples: db.settings.staples,
-    cookLog: db.cookLog,
-    recipes: db.recipes,
-    expiringSoonDays: soonDays,
-  });
-  const top = [...recs.ready, ...recs.almost].slice(0, 3);
+  const recs = recommend(contextFor(db));
+  const top = topPicks(recs);
   const attention = db.inventory
     .filter((i) => {
       const f = freshness(i, soonDays);
@@ -87,6 +82,7 @@ export function HomeView() {
         </section>
 
         <div className="space-y-6">
+          <FocusSummary plan={db.settings.plan} />
           <section className="card p-4">
             <h2 className="section-title mb-2">Use soon</h2>
             {attention.length ? (

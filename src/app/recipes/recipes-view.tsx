@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { RecipeCard } from "@/components/recipe-card";
 import { normalizeName } from "@/lib/ingredients";
 import { Loading } from "@/components/page-state";
-import { matchRecipe, tasteProfile } from "@/lib/recommend";
+import { contextFor, matchRecipe, tasteProfile } from "@/lib/recommend";
 import { useDb } from "@/lib/store";
 
 const SORTS = { match: "Best match", az: "A–Z", time: "Quickest", new: "Newest" } as const;
@@ -24,13 +24,7 @@ export function RecipesView() {
   const sort = (sortParam in SORTS ? sortParam : "match") as keyof typeof SORTS;
 
   const allTags = [...new Set(db.recipes.flatMap((r) => r.tags))].sort();
-  const ctx = {
-    inventory: db.inventory,
-    staples: db.settings.staples,
-    cookLog: db.cookLog,
-    recipes: db.recipes,
-    expiringSoonDays: db.settings.expiringSoonDays,
-  };
+  const ctx = contextFor(db);
   const profile = tasteProfile(db.recipes, db.cookLog);
 
   const qName = q ? normalizeName(q) : "";

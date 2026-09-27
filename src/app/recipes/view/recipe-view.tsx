@@ -5,11 +5,19 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
 import { Loading, NotFound } from "@/components/page-state";
-import { MatchBar, RecipeCard } from "@/components/recipe-card";
+import { BalanceRow, MatchBar, RecipeCard } from "@/components/recipe-card";
 import { deleteRecipe, rateRecipe, toggleFavorite } from "@/lib/actions";
 import { formatDate, totalMinutes } from "@/lib/format";
 import { formatIngredient } from "@/lib/ingredients";
-import { matchRecipe, planConsumption, similarRecipes, type MatchStatus } from "@/lib/recommend";
+import { GROUP_INFO, roundItOut } from "@/lib/nutrition";
+import {
+  contextFor,
+  matchRecipe,
+  planConsumption,
+  similarRecipes,
+  usableInventory,
+  type MatchStatus,
+} from "@/lib/recommend";
 import { useDb } from "@/lib/store";
 
 import { CookForm } from "./cook-form";
@@ -34,13 +42,9 @@ export function RecipeView() {
   if (!db) return <Loading />;
   if (!recipe) return <NotFound what="recipe" backHref="/recipes" backLabel="Back to recipes" />;
 
-  const match = matchRecipe(recipe, {
-    inventory: db.inventory,
-    staples: db.settings.staples,
-    cookLog: db.cookLog,
-    recipes: db.recipes,
-    expiringSoonDays: db.settings.expiringSoonDays,
-  });
+  const ctx = contextFor(db);
+  const match = matchRecipe(recipe, ctx);
+  const sides = roundItOut(match.balance, usableInventory(db.inventory), ctx.diet ?? "everything");
   const plan = planConsumption(recipe, db.inventory, db.settings.staples);
   const similar = similarRecipes(recipe, db.recipes);
   const cooked = db.cookLog.filter((c) => c.recipeId === recipe.id).sort((a, b) => b.at.localeCompare(a.at));
@@ -100,6 +104,25 @@ export function RecipeView() {
         <section className="card space-y-4 p-5 lg:col-span-1">
           <h2 className="section-title">Ingredients</h2>
           <MatchBar match={match} />
+          <div className="space-y-2 rounded-lg border border-stone-200 p-3 dark:border-stone-800">
+            <p className="text-xs font-medium tracking-wide text-stone-500 uppercase">Plate balance</p>
+            <BalanceRow balance={match.balance} />
+            {match.balance.mainProtein && match.balance.mainProtein.kind === "other" && (
+              <p className="text-xs text-stone-500">No meat or seafood — protein comes from {match.balance.mainProtein.ingredient.name}.</p>
+            )}
+            {sides.length > 0 && (
+              <div className="text-sm">
+                <p className="font-medium">Round it out with a side from your kitchen:</p>
+                <ul className="mt-1 space-y-0.5 text-stone-600 dark:text-stone-400">
+                  {sides.map((s) => (
+                    <li key={s.group}>
+                      {GROUP_INFO[s.group].icon} {GROUP_INFO[s.group].label}: {s.items.map((i) => i.name).join(", ")}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
           <ul className="space-y-2">
             {match.ingredients.map((m, idx) => {
               const s = STATUS[m.status];

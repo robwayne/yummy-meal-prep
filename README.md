@@ -20,7 +20,12 @@ A personal recipe book, kitchen inventory and meal recommender, built with **Nex
   - Ranking also learns from your favourites, star ratings and what you actually cook, and pushes down things you cooked recently.
   - A combined **shopping list** of what to buy to unlock more recipes.
   - Filter by time available and tag.
-- **Recipe book**: comes with 22 starter recipes. You can add your own, edit or delete them, search by name, cuisine, tag or ingredient, favourite them and rate them.
+- **Weekly focus & balanced plates**
+  - Every recipe is scored for a balanced plate: **protein, veg (raw is a bonus), carbs, fat and fibre**. Recipe cards show which food groups a meal covers.
+  - Meat or seafood is preferred as the main protein, especially meat you already have in stock ("Uses your chicken").
+  - Pick a focus for the week (**High protein, More veggies, High fibre, Low carb**, or **Balanced**) and optionally a diet (**Pescatarian, Vegetarian**). It lasts 7 days or until you change it, and all recommendations follow it.
+  - Recipes missing a food group suggest a side from your kitchen to round out the plate.
+- **Recipe book**: comes with 32 starter recipes, including balanced meat and seafood plates. You can add your own, edit or delete them, search by name, cuisine, tag or ingredient, favourite them and rate them.
   - Each recipe shows which ingredients you have, which you're short on and which are missing.
   - **"I cooked this"** takes the ingredients out of your inventory, with unit conversion and soonest-expiring stock used first. You can adjust the amounts before saving.
   - **"You might also like"**: similar recipes (content-based). The Cook page has **"Picked for you"**.
@@ -75,6 +80,7 @@ src/
     database.ts        empty/seeded database, backup validation
     ingredients.ts     line parser, name normalisation, matching, unit conversion
     recommend.ts       scoring, buckets, shopping list, similarity, cooking deductions
+    nutrition.ts       food groups, plate balance, weekly focus & diet scoring, side suggestions
     history.ts         per-product history roll-up
     seed-recipes.ts    starter recipe book
 .github/workflows/deploy.yml   build + publish to GitHub Pages

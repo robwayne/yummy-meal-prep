@@ -441,3 +441,233 @@ pepper`,
     ],
   }),
 ];
+
+/**
+ * Second batch: balanced plates built around meat or seafood (protein + veg +
+ * carb + fat + fibre). Added to existing recipe books by `migrateDatabase`.
+ */
+export const SEED_RECIPES_V2: SeedRecipe[] = [
+  recipe({
+    title: "Chicken Burrito Bowl",
+    description: "Spiced chicken over rice with black beans, crisp lettuce, tomato and avocado.",
+    servings: 4, prepMinutes: 15, cookMinutes: 20, cuisine: "Mexican",
+    tags: ["dinner", "balanced", "high-protein", "meal-prep", "gluten-free"],
+    ingredients: `1 lb chicken breast
+1 1/2 cups rice
+1 can black beans
+1 cup corn
+1 bell pepper
+2 cups lettuce (raw)
+2 tomatoes (raw)
+1 avocado (raw)
+1 lime
+2 tbsp olive oil
+2 tsp cumin
+1 tsp chili powder
+salt`,
+    steps: [
+      "Cook the rice.",
+      "Toss chicken in cumin, chili powder, salt and oil; pan-fry 6–7 minutes a side, then slice.",
+      "Sauté sliced pepper and corn for 4 minutes; warm the drained beans.",
+      "Build bowls: rice, beans, veg, chicken, shredded lettuce, diced tomato and avocado. Squeeze over lime.",
+    ],
+  }),
+  recipe({
+    title: "Beef & Broccoli",
+    description: "Takeout-style seared beef and broccoli in a glossy garlic-ginger sauce.",
+    servings: 4, prepMinutes: 15, cookMinutes: 15, cuisine: "Chinese",
+    tags: ["dinner", "balanced", "high-protein", "quick"],
+    ingredients: `1 lb flank steak
+1 head broccoli
+1 carrot
+1 1/2 cups rice
+3 cloves garlic
+1 tbsp ginger
+1/4 cup soy sauce
+1 tbsp honey
+1 tbsp cornstarch
+2 tbsp oil`,
+    steps: [
+      "Cook the rice. Slice steak thinly against the grain and toss with half the cornstarch.",
+      "Sear beef in batches in a very hot pan; set aside.",
+      "Stir-fry broccoli and sliced carrot with a splash of water for 3 minutes, then garlic and ginger.",
+      "Add soy, honey, remaining cornstarch and 1/3 cup water; return beef and toss until glossy. Serve over rice.",
+    ],
+  }),
+  recipe({
+    title: "Garlic Shrimp with Quinoa & Greens",
+    description: "Lemony garlic shrimp over fluffy quinoa with wilted spinach and fresh tomatoes.",
+    servings: 3, prepMinutes: 10, cookMinutes: 20, cuisine: "Mediterranean",
+    tags: ["dinner", "balanced", "high-protein", "quick", "gluten-free"],
+    ingredients: `1 lb shrimp
+1 cup quinoa
+4 cups spinach
+1 cup cherry tomatoes (raw)
+4 cloves garlic
+1 lemon
+2 tbsp olive oil
+1 tbsp butter
+salt
+pepper`,
+    steps: [
+      "Simmer quinoa in 2 cups salted water for 15 minutes; rest covered.",
+      "Sizzle garlic in oil and butter, add shrimp and cook 2 minutes a side until pink.",
+      "Stir in spinach until just wilted, then lemon juice and zest.",
+      "Serve over quinoa, topped with halved raw tomatoes.",
+    ],
+  }),
+  recipe({
+    title: "Salmon Rice Bowl with Cucumber Salad",
+    description: "Glazed salmon, rice, and a crunchy raw cucumber-carrot salad.",
+    servings: 2, prepMinutes: 15, cookMinutes: 15, cuisine: "Japanese",
+    tags: ["dinner", "balanced", "high-protein"],
+    ingredients: `2 salmon fillets
+1 cup rice
+1 cucumber (raw)
+1 carrot (raw)
+1 avocado (raw)
+3 tbsp soy sauce
+1 tbsp honey
+1 tbsp rice vinegar
+1 tsp sesame oil
+sesame seeds (optional)`,
+    steps: [
+      "Cook the rice.",
+      "Brush salmon with 2 tbsp soy and the honey; bake at 200°C / 400°F for 12 minutes.",
+      "Thinly slice cucumber and grate carrot; dress with rice vinegar, sesame oil and the rest of the soy.",
+      "Serve salmon over rice with the salad and sliced avocado.",
+    ],
+  }),
+  recipe({
+    title: "Greek Chicken Pita Plate",
+    description: "Oregano-lemon chicken with warm pita, yogurt sauce and a fresh chopped salad.",
+    servings: 4, prepMinutes: 20, cookMinutes: 15, cuisine: "Greek",
+    tags: ["dinner", "balanced", "high-protein", "salad"],
+    ingredients: `1 1/2 lb chicken thighs
+4 pita breads
+1 cucumber
+3 tomatoes
+1/2 red onion
+2 cups lettuce
+1 cup yogurt
+1 lemon
+3 tbsp olive oil
+2 tsp dried oregano
+2 cloves garlic
+salt`,
+    steps: [
+      "Marinate chicken in lemon juice, 2 tbsp oil, oregano, garlic and salt for 15+ minutes.",
+      "Grill or pan-fry 5–6 minutes a side; rest and slice.",
+      "Chop cucumber, tomatoes, onion and lettuce; dress with the remaining oil and salt.",
+      "Mix yogurt with a squeeze of lemon. Serve with warm pita.",
+    ],
+  }),
+  recipe({
+    title: "Turkey & Sweet Potato Skillet",
+    description: "One-pan ground turkey, sweet potato, peppers and spinach.",
+    servings: 4, prepMinutes: 10, cookMinutes: 25, cuisine: "American",
+    tags: ["dinner", "balanced", "high-protein", "one-pan", "gluten-free", "meal-prep"],
+    ingredients: `1 lb ground turkey
+2 sweet potatoes
+1 bell pepper
+1 onion
+3 cups spinach
+2 tbsp olive oil
+1 tsp paprika
+1 tsp cumin
+salt
+avocado (optional)`,
+    steps: [
+      "Cook diced sweet potato in oil, covered, for 10 minutes until nearly tender.",
+      "Push aside, add turkey and onion and brown well.",
+      "Add pepper and spices; cook 5 minutes. Fold in spinach until wilted. Season.",
+    ],
+  }),
+  recipe({
+    title: "Steak with Roasted Potatoes & Green Beans",
+    description: "A proper steak dinner: seared steak, crispy potatoes and garlicky green beans.",
+    servings: 2, prepMinutes: 10, cookMinutes: 35, cuisine: "American",
+    tags: ["dinner", "balanced", "high-protein", "gluten-free"],
+    ingredients: `2 steaks
+1 lb potatoes
+8 oz green beans
+2 tbsp butter
+2 tbsp olive oil
+3 cloves garlic
+salt
+pepper`,
+    steps: [
+      "Roast halved potatoes in oil and salt at 220°C / 425°F for 30–35 minutes.",
+      "Season steaks well; sear in a smoking-hot pan 3–4 minutes a side, basting with butter and garlic. Rest 5 minutes.",
+      "Sauté green beans in the steak pan for 4–5 minutes.",
+    ],
+  }),
+  recipe({
+    title: "Chicken Fajitas",
+    description: "Sizzling chicken, peppers and onions in warm tortillas.",
+    servings: 4, prepMinutes: 15, cookMinutes: 15, cuisine: "Tex-Mex",
+    tags: ["dinner", "balanced", "high-protein", "quick"],
+    ingredients: `1 1/2 lb chicken breast
+3 bell peppers
+1 onion
+8 tortillas
+1 avocado (raw)
+1 lime
+2 tsp chili powder
+1 tsp cumin
+2 tbsp oil
+2 cups lettuce (raw)
+sour cream (optional)`,
+    steps: [
+      "Slice chicken, peppers and onion; toss chicken with spices, lime juice and 1 tbsp oil.",
+      "Sear chicken in a hot pan until cooked; remove. Cook peppers and onion until charred at the edges.",
+      "Return chicken, toss, and serve in warm tortillas with lettuce, avocado and sour cream.",
+    ],
+  }),
+  recipe({
+    title: "Pork & Cabbage Noodle Stir-Fry",
+    description: "Quick pork and crunchy cabbage noodles with a savoury sauce.",
+    servings: 3, prepMinutes: 10, cookMinutes: 12, cuisine: "Chinese",
+    tags: ["dinner", "balanced", "quick"],
+    ingredients: `12 oz pork tenderloin
+200 g rice noodles
+3 cups cabbage
+1 carrot
+2 green onions
+3 cloves garlic
+3 tbsp soy sauce
+1 tbsp honey
+2 tbsp oil
+peanuts (optional)`,
+    steps: [
+      "Soak or cook noodles; drain.",
+      "Stir-fry thin-sliced pork in oil until browned; remove.",
+      "Stir-fry shredded cabbage, carrot and garlic for 3 minutes.",
+      "Add noodles, pork, soy and honey; toss. Finish with green onions and peanuts.",
+    ],
+  }),
+  recipe({
+    title: "Tuna Niçoise Salad",
+    description: "Tuna, potatoes, green beans and egg on crisp lettuce with a mustard dressing.",
+    servings: 2, prepMinutes: 15, cookMinutes: 15, cuisine: "French",
+    tags: ["lunch", "balanced", "high-protein", "salad", "gluten-free"],
+    ingredients: `2 cans tuna
+8 oz potatoes
+4 oz green beans
+2 eggs
+4 cups lettuce
+1 cup cherry tomatoes
+1/4 cup olives
+3 tbsp olive oil
+1 tbsp vinegar
+1 tsp mustard
+salt`,
+    steps: [
+      "Boil potatoes 12 minutes, adding green beans for the last 3 and eggs (separately) for 8.",
+      "Whisk oil, vinegar, mustard and salt.",
+      "Arrange lettuce, halved potatoes, beans, tomatoes, olives, quartered eggs and flaked tuna. Dress.",
+    ],
+  }),
+];
+
+export const SEED_VERSION = 2;

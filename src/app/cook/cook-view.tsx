@@ -6,7 +6,9 @@ import { useSearchParams } from "next/navigation";
 
 import { RecipeCard } from "@/components/recipe-card";
 import { Loading } from "@/components/page-state";
-import { forYou, freshness, recommend, shoppingList, type RecipeMatch } from "@/lib/recommend";
+import { FocusPicker } from "@/components/focus-picker";
+import { FOCUS_INFO, fitsDiet } from "@/lib/nutrition";
+import { contextFor, forYou, freshness, recommend, shoppingList, topPicks, type RecipeMatch } from "@/lib/recommend";
 import { useDb } from "@/lib/store";
 
 function Section({ title, subtitle, matches }: { title: string; subtitle: string; matches: RecipeMatch[] }) {
@@ -39,19 +41,11 @@ export function CookView() {
     .filter((r) => !maxTime || r.prepMinutes + r.cookMinutes <= maxTime)
     .filter((r) => !tag || r.tags.includes(tag));
 
-  const recs = recommend(
-    {
-      inventory: db.inventory,
-      staples: db.settings.staples,
-      cookLog: db.cookLog,
-      recipes,
-      expiringSoonDays: db.settings.expiringSoonDays,
-    },
-    missingAllowed,
-  );
+  const ctx = contextFor(db);
+  const recs = recommend({ ...ctx, recipes }, missingAllowed);
   const shopping = shoppingList(recs.almost);
   const expiring = db.inventory.filter((i) => freshness(i, db.settings.expiringSoonDays) === "soon");
-  const suggestions = forYou(db.recipes, db.cookLog);
+  const suggestions = forYou(db.recipes, db.cookLog).filter((r) => fitsDiet(r, ctx.diet ?? "everything"));
   const allTags = [...new Set(db.recipes.flatMap((r) => r.tags))].sort();
 
   return (
@@ -59,9 +53,11 @@ export function CookView() {
       <div>
         <h1 className="page-title">What can I cook?</h1>
         <p className="text-stone-500">
-          Recommendations based on the {db.inventory.length} items in your kitchen, what&apos;s about to expire, and what you like.
+          Recommendations based on the {db.inventory.length} items in your kitchen, what&apos;s about to expire, this week&apos;s focus and what you like.
         </p>
       </div>
+
+      <FocusPicker plan={db.settings.plan} />
 
       <Form action="/cook" className="card flex flex-wrap items-end gap-3 p-4">
         <div>
@@ -108,6 +104,11 @@ export function CookView() {
         </div>
       )}
 
+      <Section
+        title={`Top picks · ${FOCUS_INFO[ctx.focus ?? "balanced"].label}`}
+        subtitle="The best fits for this week's focus, whether you can make them now or need one or two things."
+        matches={topPicks(recs)}
+      />
       <Section title="Ready to cook" subtitle="You have everything you need (pantry staples assumed)." matches={recs.ready} />
       <Section
         title="Almost there"

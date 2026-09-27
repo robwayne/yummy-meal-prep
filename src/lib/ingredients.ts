@@ -332,18 +332,20 @@ function singularize(word: string): string {
 
 /** Canonical form of an ingredient name used for matching. */
 export function normalizeName(name: string): string {
-  const cleaned = name
+  const words = name
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/\(.*?\)/g, " ")
     .replace(/[^a-z\s-]/g, " ")
     .replace(/-/g, " ")
     .split(/\s+/)
-    .filter((w) => w && !DESCRIPTORS.has(w))
-    .map(singularize)
-    .join(" ")
-    .trim();
+    .filter(Boolean)
+    .map(singularize);
+  // Check the full name first: "crushed tomatoes" is a canned product, not fresh tomatoes.
+  const whole = SYNONYMS[words.join(" ")];
+  if (whole) return whole;
+  const cleaned = words.filter((w) => !DESCRIPTORS.has(w)).join(" ");
   if (!cleaned) return name.toLowerCase().trim();
   return SYNONYMS[cleaned] ?? cleaned;
 }
@@ -376,7 +378,8 @@ export function ingredientMatches(recipeIngredient: string, inventoryItem: strin
   const inv = normalizeName(inventoryItem);
   if (r === inv) return true;
   if (containsAllWords(inv, r)) {
-    return !DISTINCT_COMPOUNDS.has(inv) || SPECIFIC_VARIANTS.has(inv);
+    // "egg noodle" is a kind of noodle, not a kind of egg.
+    return !DISTINCT_COMPOUNDS.has(inv) || (SPECIFIC_VARIANTS.has(inv) && inv.endsWith(` ${r}`));
   }
   if (containsAllWords(r, inv)) {
     return !DISTINCT_COMPOUNDS.has(r);

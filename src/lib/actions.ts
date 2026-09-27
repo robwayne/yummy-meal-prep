@@ -4,14 +4,15 @@
  */
 import { z } from "zod";
 
-import { newId } from "./database";
 import { convert, normalizeName, normalizeUnit, parseIngredientLines } from "./ingredients";
 import { todayIso } from "./recommend";
+import { isDatabase, migrateDatabase, newId } from "./database";
 import { mutate, replaceDb } from "./store";
-import { isDatabase } from "./database";
 import {
   LOCATIONS,
   type Database,
+  type Diet,
+  type Focus,
   type InventoryEvent,
   type InventoryItem,
   type Location,
@@ -351,9 +352,28 @@ export function restoreBackup(json: string): ActionState {
     return { ok: false, message: "That file isn't valid JSON" };
   }
   if (!isDatabase(parsed)) return { ok: false, message: "That doesn't look like a Yummy Meal Prep backup" };
+  migrateDatabase(parsed);
   replaceDb(parsed);
   return {
     ok: true,
     message: `Restored ${parsed.inventory.length} items, ${parsed.recipes.length} recipes and ${parsed.events.length} history entries`,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Weekly focus
+
+/** Set what recommendations prioritise. "week" lasts 7 days including today. */
+export function setMealPlan(focus: Focus, diet: Diet, duration: "week" | "ongoing"): void {
+  const today = todayIso();
+  let until: string | undefined;
+  if (duration === "week") {
+    const d = new Date(`${today}T00:00:00`);
+    d.setDate(d.getDate() + 6);
+    until = todayIso(d);
+  }
+  mutate((db) => {
+    db.settings.plan =
+      focus === "balanced" && diet === "everything" ? undefined : { focus, diet, until, setOn: today };
+  });
 }

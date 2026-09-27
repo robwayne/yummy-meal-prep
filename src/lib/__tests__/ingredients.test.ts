@@ -91,3 +91,13 @@ describe("display round-trip", () => {
     expect(parseIngredientLine("1 bulb garlic")).toMatchObject({ unit: "head", name: "garlic" });
   });
 });
+
+describe("canned vs fresh", () => {
+  it("does not treat canned tomatoes as fresh", () => {
+    expect(normalizeName("crushed tomatoes")).toBe("canned tomato");
+    expect(normalizeName("diced tomatoes")).toBe("canned tomato");
+    expect(ingredientMatches("tomatoes", "crushed tomatoes")).toBe(false);
+    expect(ingredientMatches("crushed tomatoes", "canned tomatoes")).toBe(true);
+    expect(normalizeName("minced garlic")).toBe("garlic");
+  });
+});

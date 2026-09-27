@@ -3,7 +3,8 @@
  * test and reason about.
  */
 import { convert, ingredientMatches, normalizeName } from "./ingredients";
-import type { CookLogEntry, InventoryItem, Recipe, RecipeIngredient } from "./types";
+import { activePlan, fitsDiet, nutritionScore, recipeBalance, type Balance } from "./nutrition";
+import type { CookLogEntry, Database, Diet, Focus, InventoryItem, Recipe, RecipeIngredient } from "./types";
 
 export type MatchStatus = "have" | "low" | "staple" | "missing";
 
@@ -23,6 +24,8 @@ export type RecipeMatch = {
   coverage: number;
   /** Items expiring soon that this recipe would use up. */
   usesExpiring: InventoryItem[];
+  /** Food groups on the plate. */
+  balance: Balance;
   score: number;
   reasons: string[];
 };
@@ -33,10 +36,28 @@ export type RecommendContext = {
   cookLog: CookLogEntry[];
   recipes: Recipe[];
   expiringSoonDays: number;
+  /** This week's priority and diet (defaults: balanced, no restrictions). */
+  focus?: Focus;
+  diet?: Diet;
   now?: Date;
 };
 
 const DAY = 24 * 60 * 60 * 1000;
+
+/** Everything the engine needs, taken from the saved database. */
+export function contextFor(db: Database, now = new Date()): RecommendContext {
+  const { focus, diet } = activePlan(db.settings.plan, todayIso(now));
+  return {
+    inventory: db.inventory,
+    staples: db.settings.staples,
+    cookLog: db.cookLog,
+    recipes: db.recipes,
+    expiringSoonDays: db.settings.expiringSoonDays,
+    focus,
+    diet,
+    now,
+  };
+}
 
 export function todayIso(now = new Date()): string {
   const d = new Date(now.getTime() - now.getTimezoneOffset() * 60_000);
@@ -177,6 +198,13 @@ export function matchRecipe(
     score += Math.min(36, usesExpiring.length * 12);
     reasons.push(`Uses up ${usesExpiring.map((i) => i.name).join(", ")} before it expires`);
   }
+  const balance = recipeBalance(recipe, (ing) =>
+    ingredients.some((m) => m.ingredient === ing && m.status !== "missing"),
+  );
+  const nutrition = nutritionScore(recipe, balance, ctx.focus ?? "balanced", ctx.diet ?? "everything", usable);
+  score += nutrition.score;
+  reasons.push(...nutrition.reasons);
+
   if (recipe.favorite) {
     score += 10;
     reasons.push("One of your favourites");
@@ -203,6 +231,7 @@ export function matchRecipe(
     missing,
     coverage,
     usesExpiring,
+    balance,
     score,
     reasons,
   };
@@ -210,7 +239,9 @@ export function matchRecipe(
 
 export function rankRecipes(ctx: RecommendContext): RecipeMatch[] {
   const profile = tasteProfile(ctx.recipes, ctx.cookLog);
+  const diet = ctx.diet ?? "everything";
   return ctx.recipes
+    .filter((r) => fitsDiet(r, diet))
     .map((r) => matchRecipe(r, ctx, profile))
     .sort((a, b) => b.score - a.score || a.missing.length - b.missing.length);
 }
@@ -228,6 +259,11 @@ export function recommend(ctx: RecommendContext, almostThreshold = 2): Recommend
     almost: ranked.filter((m) => m.missing.length > 0 && m.missing.length <= almostThreshold),
     stretch: ranked.filter((m) => m.missing.length > almostThreshold && m.coverage >= 0.4),
   };
+}
+
+/** The best few meals overall: ready or nearly ready, ordered purely by score. */
+export function topPicks(recs: Recommendations, limit = 3): RecipeMatch[] {
+  return [...recs.ready, ...recs.almost].sort((a, b) => b.score - a.score).slice(0, limit);
 }
 
 export type ShoppingItem = { name: string; forRecipes: string[] };
