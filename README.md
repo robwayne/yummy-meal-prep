@@ -1,6 +1,8 @@
 # Yummy Meal Prep 🥕
 
-A personal recipe book, kitchen inventory and meal recommender, built with **Next.js 16** (App Router, Server Actions) and **React 19**.
+A personal recipe book, kitchen inventory and meal recommender, built with **Next.js 16** and **React 19**. It runs entirely in your browser (no server, no account), is built for iPhone, and is hosted on GitHub Pages.
+
+**Live app:** https://robwayne.github.io/yummy-meal-prep/
 
 ## Features
 
@@ -23,7 +25,16 @@ A personal recipe book, kitchen inventory and meal recommender, built with **Nex
   - **"I cooked this"** takes the ingredients out of your inventory, with unit conversion and soonest-expiring stock used first. You can adjust the amounts before saving.
   - **"You might also like"**: similar recipes (content-based). The Cook page has **"Picked for you"**.
 - **Smart ingredient matching**: handles plurals, synonyms (scallion = green onion, penne → pasta), varieties (olive oil counts as "oil", sharp cheddar as "cheddar") and false friends (peanut butter ≠ butter).
-- **Settings**: pantry staples that are always assumed to be on hand (salt, pepper, oil…), the length of the "expiring soon" window, and a JSON backup download.
+- **Settings**: pantry staples that are always assumed to be on hand (salt, pepper, oil…), the length of the "expiring soon" window, backup download and restore, and "erase everything".
+- **iPhone-friendly**: bottom tab bar, number keypads for amounts, no zoom-on-tap, and installable to the Home Screen as a full-screen app.
+
+## Where your data lives
+
+Everything is saved in your browser's local storage, on each device separately. Nothing is sent anywhere.
+
+- **On iPhone, add it to your Home Screen** (Safari → Share → Add to Home Screen). iOS can clear a website's data after about a week without a visit, but Home Screen apps are exempt.
+- To move data between devices, use **Settings → Download backup**, then **Restore from backup** on the other device.
+- All storage goes through `src/lib/store.ts`, so it can later be swapped for a synced database such as Supabase without changing the pages.
 
 ## Getting started
 
@@ -32,15 +43,23 @@ npm install
 npm run dev        # http://localhost:3000
 ```
 
-Data is stored in `data/db.json` (git-ignored), which is created on first run and seeded with the starter recipes. Set `YUMMY_DATA_DIR` to keep it somewhere else.
+## Deploying
+
+Pushing to `main` or `feature/recipe-inventory-app` runs `.github/workflows/deploy.yml`. It lints, tests, builds a static site into `out/` and publishes it to GitHub Pages. One-time setup: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+
+To preview the Pages build locally:
+
+```bash
+PAGES_BASE_PATH=/yummy-meal-prep npm run build   # static site in out/
+```
 
 ## Scripts
 
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | Dev server |
-| `npm run build && npm start` | Production build / server |
-| `npm test` | Unit tests (Vitest) for parsing, matching and recommendations |
+| `npm run build` | Static export to `out/` |
+| `npm test` | Unit tests (Vitest) for parsing, matching, recommendations and data changes |
 | `npm run typecheck` | Generate route types and run `tsc` |
 | `npm run lint` | ESLint |
 
@@ -48,16 +67,15 @@ Data is stored in `data/db.json` (git-ignored), which is created on first run an
 
 ```
 src/
-  app/                 routes (/, /inventory, /cook, /recipes, /history, /settings)
-    actions/           server actions (inventory, recipes, settings)
-    api/export/        JSON backup download
-  components/          shared UI
+  app/                 pages (/, /inventory, /cook, /recipes, /recipes/view, /recipes/edit, /history, /settings)
+  components/          shared UI (nav + phone tab bar, forms, recipe cards)
   lib/
-    db.ts              JSON-file database (atomic, serialised writes)
+    store.ts           browser storage (localStorage) + React hook
+    actions.ts         every data change: validation + history logging
+    database.ts        empty/seeded database, backup validation
     ingredients.ts     line parser, name normalisation, matching, unit conversion
     recommend.ts       scoring, buckets, shopping list, similarity, cooking deductions
     history.ts         per-product history roll-up
     seed-recipes.ts    starter recipe book
+.github/workflows/deploy.yml   build + publish to GitHub Pages
 ```
-
-The storage layer is a single module (`lib/db.ts`). To host this for more than one person, swap it for a real database such as SQLite/Postgres via Drizzle or Prisma, and add authentication to the server actions.

@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 
-import type { ActionState } from "@/app/actions/inventory";
+import type { ActionState } from "@/lib/actions";
 
 export function SubmitButton({
   children,

@@ -1,21 +1,18 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
+"use client";
 
-import { deleteRecipe, rateRecipe, toggleFavorite } from "@/app/actions/recipes";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+
+import { Loading, NotFound } from "@/components/page-state";
 import { MatchBar, RecipeCard } from "@/components/recipe-card";
+import { deleteRecipe, rateRecipe, toggleFavorite } from "@/lib/actions";
 import { formatDate, totalMinutes } from "@/lib/format";
 import { formatIngredient } from "@/lib/ingredients";
-import { getData } from "@/lib/queries";
 import { matchRecipe, planConsumption, similarRecipes, type MatchStatus } from "@/lib/recommend";
+import { useDb } from "@/lib/store";
 
 import { CookForm } from "./cook-form";
-
-export async function generateMetadata({ params }: PageProps<"/recipes/[id]">): Promise<Metadata> {
-  const { id } = await params;
-  const db = await getData();
-  return { title: db.recipes.find((r) => r.id === id)?.title ?? "Recipe" };
-}
 
 const STATUS: Record<MatchStatus, { icon: string; label: string; className: string }> = {
   have: { icon: "✓", label: "In your kitchen", className: "text-brand-600" },
@@ -24,11 +21,18 @@ const STATUS: Record<MatchStatus, { icon: string; label: string; className: stri
   missing: { icon: "✗", label: "Missing", className: "text-red-500" },
 };
 
-export default async function RecipePage({ params }: PageProps<"/recipes/[id]">) {
-  const { id } = await params;
-  const db = await getData();
-  const recipe = db.recipes.find((r) => r.id === id);
-  if (!recipe) notFound();
+export function RecipeView() {
+  const id = useSearchParams().get("id");
+  const router = useRouter();
+  const db = useDb();
+  const recipe = db?.recipes.find((r) => r.id === id);
+
+  useEffect(() => {
+    if (recipe) document.title = `${recipe.title} · Yummy Meal Prep`;
+  }, [recipe]);
+
+  if (!db) return <Loading />;
+  if (!recipe) return <NotFound what="recipe" backHref="/recipes" backLabel="Back to recipes" />;
 
   const match = matchRecipe(recipe, {
     inventory: db.inventory,
@@ -60,25 +64,35 @@ export default async function RecipePage({ params }: PageProps<"/recipes/[id]">)
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <form action={toggleFavorite.bind(null, recipe.id)}>
-            <button className="btn">{recipe.favorite ? "❤️ Favourite" : "🤍 Favourite"}</button>
-          </form>
+          <button type="button" className="btn" onClick={() => toggleFavorite(recipe.id)} aria-pressed={recipe.favorite}>
+            {recipe.favorite ? "❤️ Favourite" : "🤍 Favourite"}
+          </button>
           <div className="flex items-center rounded-lg border border-stone-300 px-1 dark:border-stone-700" aria-label="Rating">
             {[1, 2, 3, 4, 5].map((n) => (
-              <form key={n} action={rateRecipe.bind(null, recipe.id, n)}>
-                <button
-                  title={`Rate ${n}`}
-                  className={`px-0.5 text-lg ${n <= (recipe.rating ?? 0) ? "text-amber-500" : "text-stone-300 dark:text-stone-600"}`}
-                >
-                  ★
-                </button>
-              </form>
+              <button
+                key={n}
+                type="button"
+                title={`Rate ${n}`}
+                aria-label={`Rate ${n} out of 5`}
+                onClick={() => rateRecipe(recipe.id, n)}
+                className={`px-1 py-1 text-xl ${n <= (recipe.rating ?? 0) ? "text-amber-500" : "text-stone-300 dark:text-stone-600"}`}
+              >
+                ★
+              </button>
             ))}
           </div>
-          <Link href={`/recipes/${recipe.id}/edit`} className="btn">Edit</Link>
-          <form action={deleteRecipe.bind(null, recipe.id)}>
-            <button className="btn btn-danger">Delete</button>
-          </form>
+          <Link href={`/recipes/edit?id=${recipe.id}`} className="btn">Edit</Link>
+          <button
+            type="button"
+            className="btn btn-danger"
+            onClick={() => {
+              if (!confirm(`Delete "${recipe.title}"? This can't be undone.`)) return;
+              router.push("/recipes");
+              deleteRecipe(recipe.id);
+            }}
+          >
+            Delete
+          </button>
         </div>
       </div>
 
@@ -133,7 +147,7 @@ export default async function RecipePage({ params }: PageProps<"/recipes/[id]">)
               ))}
             </ol>
           ) : (
-            <p className="text-stone-500">No steps yet. <Link href={`/recipes/${recipe.id}/edit`} className="underline">Add some</Link>.</p>
+            <p className="text-stone-500">No steps yet. <Link href={`/recipes/edit?id=${recipe.id}`} className="underline">Add some</Link>.</p>
           )}
           {cooked.length > 0 && (
             <p className="mt-6 text-sm text-stone-500">

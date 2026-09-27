@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 
-import { addItem, addItemsBulk, type ActionState } from "@/app/actions/inventory";
+import { addItem, addItemsBulk, type ActionState } from "@/lib/actions";
 import { FieldError, FormMessage, SubmitButton } from "@/components/form";
 import { COMMON_UNITS } from "@/lib/ingredients";
 import { LOCATION_LABELS, LOCATIONS, type Location } from "@/lib/types";
@@ -26,8 +26,8 @@ function LocationSelect({ defaultValue }: { defaultValue?: Location }) {
 function SingleForm({ defaults, suggestions }: { defaults: AddDefaults; suggestions: string[] }) {
   const [state, action] = useActionState(addItem, initial);
   return (
-    <form action={action} className="grid gap-3 sm:grid-cols-6">
-      <div className="sm:col-span-3">
+    <form action={action} className="grid grid-cols-2 gap-3 sm:grid-cols-6">
+      <div className="col-span-2 sm:col-span-3">
         <label className="label" htmlFor="add-name">Item</label>
         <input
           id="add-name"
@@ -48,7 +48,7 @@ function SingleForm({ defaults, suggestions }: { defaults: AddDefaults; suggesti
       </div>
       <div className="sm:col-span-1">
         <label className="label" htmlFor="add-qty">Qty</label>
-        <input id="add-qty" name="quantity" type="number" step="any" min="0" defaultValue={1} className="input" required />
+        <input id="add-qty" name="quantity" type="number" inputMode="decimal" step="any" min="0" defaultValue={1} className="input" required />
         <FieldError state={state} name="quantity" />
       </div>
       <div className="sm:col-span-2">
@@ -69,11 +69,11 @@ function SingleForm({ defaults, suggestions }: { defaults: AddDefaults; suggesti
         <input id="add-exp" name="expiresOn" type="date" className="input" />
         <FieldError state={state} name="expiresOn" />
       </div>
-      <div className="sm:col-span-2">
+      <div className="col-span-2 sm:col-span-2">
         <label className="label" htmlFor="add-notes">Notes</label>
         <input id="add-notes" name="notes" className="input" placeholder="optional" />
       </div>
-      <div className="flex items-center gap-3 sm:col-span-6">
+      <div className="col-span-2 flex items-center gap-3 sm:col-span-6">
         <SubmitButton pendingText="Adding…">Add to inventory</SubmitButton>
         <FormMessage state={state} />
       </div>

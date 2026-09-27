@@ -3,14 +3,14 @@ import { Suspense } from "react";
 
 import { Loading } from "@/components/page-state";
 
-import { RecipesView } from "./recipes-view";
+import { EditRecipeView } from "./edit-view";
 
-export const metadata: Metadata = { title: "Recipes" };
+export const metadata: Metadata = { title: "Edit recipe" };
 
-export default function RecipesPage() {
+export default function EditRecipePage() {
   return (
     <Suspense fallback={<Loading />}>
-      <RecipesView />
+      <EditRecipeView />
     </Suspense>
   );
 }

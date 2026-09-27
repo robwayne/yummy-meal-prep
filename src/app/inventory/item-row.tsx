@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 
-import { consumeItem, discardItem, updateItem, type ActionState } from "@/app/actions/inventory";
+import { consumeItem, discardItem, updateItem, type ActionState } from "@/lib/actions";
 import { ExpiryBadge } from "@/components/badges";
 import { FieldError, SubmitButton } from "@/components/form";
 import { formatQuantity } from "@/lib/ingredients";
@@ -11,8 +11,8 @@ import { LOCATION_LABELS, LOCATIONS, type InventoryItem } from "@/lib/types";
 const initial: ActionState = {};
 
 function UseForm({ item, onDone }: { item: InventoryItem; onDone: () => void }) {
-  const [state, action] = useActionState(async (prev: ActionState, fd: FormData) => {
-    const res = await consumeItem(item.id, prev, fd);
+  const [state, action] = useActionState((prev: ActionState, fd: FormData) => {
+    const res = consumeItem(item.id, prev, fd);
     if (res.ok) onDone();
     return res;
   }, initial);
@@ -24,6 +24,7 @@ function UseForm({ item, onDone }: { item: InventoryItem; onDone: () => void }) 
           id={`use-${item.id}`}
           name="amount"
           type="number"
+          inputMode="decimal"
           step="any"
           min="0"
           max={item.quantity}
@@ -50,8 +51,8 @@ function UseForm({ item, onDone }: { item: InventoryItem; onDone: () => void }) 
 }
 
 function EditForm({ item, onDone }: { item: InventoryItem; onDone: () => void }) {
-  const [state, action] = useActionState(async (prev: ActionState, fd: FormData) => {
-    const res = await updateItem(item.id, prev, fd);
+  const [state, action] = useActionState((prev: ActionState, fd: FormData) => {
+    const res = updateItem(item.id, prev, fd);
     if (res.ok) onDone();
     return res;
   }, initial);
@@ -64,7 +65,7 @@ function EditForm({ item, onDone }: { item: InventoryItem; onDone: () => void })
       </div>
       <div>
         <label className="label">Qty</label>
-        <input name="quantity" type="number" step="any" min="0" defaultValue={item.quantity} className="input" required />
+        <input name="quantity" type="number" inputMode="decimal" step="any" min="0" defaultValue={item.quantity} className="input" required />
         <FieldError state={state} name="quantity" />
       </div>
       <div>
@@ -100,7 +101,7 @@ export function ItemRow({ item, soonDays }: { item: InventoryItem; soonDays: num
   return (
     <li className="py-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <div className="min-w-0 flex-1">
+        <div className="w-full min-w-0 sm:w-auto sm:flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-medium">{item.name}</span>
             <span className="text-sm text-stone-500">{formatQuantity(item.quantity, item.unit) || item.quantity}</span>
@@ -112,12 +113,24 @@ export function ItemRow({ item, soonDays }: { item: InventoryItem; soonDays: num
           <div className="flex flex-wrap gap-1.5">
             <button type="button" className="btn btn-sm" onClick={() => setMode("use")}>Use</button>
             <button type="button" className="btn btn-sm" onClick={() => setMode("edit")}>Edit</button>
-            <form action={discardItem.bind(null, item.id, "expired")}>
-              <button className="btn btn-sm btn-danger" title="Throw out (spoiled / expired)">Toss</button>
-            </form>
-            <form action={discardItem.bind(null, item.id, "removed")}>
-              <button className="btn btn-sm btn-danger" title="Remove from inventory">Remove</button>
-            </form>
+            <button
+              type="button"
+              className="btn btn-sm btn-danger"
+              title="Throw out (spoiled / expired)"
+              onClick={() => discardItem(item.id, "expired")}
+            >
+              Toss
+            </button>
+            <button
+              type="button"
+              className="btn btn-sm btn-danger"
+              title="Remove from inventory"
+              onClick={() => {
+                if (confirm(`Remove ${item.name} from your inventory?`)) discardItem(item.id, "removed");
+              }}
+            >
+              Remove
+            </button>
           </div>
         )}
       </div>

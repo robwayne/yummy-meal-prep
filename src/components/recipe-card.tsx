@@ -25,7 +25,7 @@ export function MatchBar({ match }: { match: RecipeMatch }) {
 export function RecipeCard({ recipe, match }: { recipe: Recipe; match?: RecipeMatch }) {
   return (
     <Link
-      href={`/recipes/${recipe.id}`}
+      href={`/recipes/view?id=${recipe.id}`}
       className="card group flex flex-col gap-3 p-4 transition hover:-translate-y-0.5 hover:border-brand-500/50 hover:shadow-md"
     >
       <div className="flex items-start justify-between gap-2">

@@ -1,18 +1,23 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 
-import type { ActionState } from "@/app/actions/inventory";
-import { saveRecipe } from "@/app/actions/recipes";
 import { FieldError, FormMessage, SubmitButton } from "@/components/form";
+import { saveRecipe, type ActionState } from "@/lib/actions";
 import { formatIngredient } from "@/lib/ingredients";
 import type { Recipe } from "@/lib/types";
 
 const initial: ActionState = {};
 
 export function RecipeForm({ recipe }: { recipe?: Recipe }) {
-  const [state, action] = useActionState(saveRecipe.bind(null, recipe?.id ?? null), initial);
+  const router = useRouter();
+  const [state, action] = useActionState((prev: ActionState, fd: FormData) => {
+    const res = saveRecipe(recipe?.id ?? null, prev, fd);
+    if (res.ok && res.id) router.push(`/recipes/view?id=${res.id}`);
+    return res;
+  }, initial);
   const ingredientText = recipe?.ingredients
     .map((i) => `${formatIngredient(i)}${i.note ? ` (${i.note})` : ""}${i.optional ? " (optional)" : ""}`)
     .join("\n");
@@ -76,7 +81,7 @@ export function RecipeForm({ recipe }: { recipe?: Recipe }) {
       </div>
       <div className="flex items-center gap-3 sm:col-span-6">
         <SubmitButton pendingText="Saving…">{recipe ? "Save changes" : "Add recipe"}</SubmitButton>
-        <Link href={recipe ? `/recipes/${recipe.id}` : "/recipes"} className="btn">Cancel</Link>
+        <Link href={recipe ? `/recipes/view?id=${recipe.id}` : "/recipes"} className="btn">Cancel</Link>
         <FormMessage state={state} />
       </div>
     </form>

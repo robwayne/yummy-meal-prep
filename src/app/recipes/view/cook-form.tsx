@@ -2,17 +2,16 @@
 
 import { useActionState, useState } from "react";
 
-import type { ActionState } from "@/app/actions/inventory";
-import { cookRecipe } from "@/app/actions/recipes";
 import { FormMessage, SubmitButton } from "@/components/form";
+import { cookRecipe, type ActionState } from "@/lib/actions";
 import type { PlannedUse } from "@/lib/recommend";
 
 const initial: ActionState = {};
 
 export function CookForm({ recipeId, plan }: { recipeId: string; plan: PlannedUse[] }) {
   const [open, setOpen] = useState(false);
-  const [state, action] = useActionState(async (prev: ActionState, fd: FormData) => {
-    const res = await cookRecipe(recipeId, prev, fd);
+  const [state, action] = useActionState((prev: ActionState, fd: FormData) => {
+    const res = cookRecipe(recipeId, prev, fd);
     if (res.ok) setOpen(false);
     return res;
   }, initial);
@@ -50,6 +49,7 @@ export function CookForm({ recipeId, plan }: { recipeId: string; plan: PlannedUs
                 id={`use-${p.itemId}`}
                 name={`use:${p.itemId}`}
                 type="number"
+                inputMode="decimal"
                 step="any"
                 min={0}
                 max={p.available}
