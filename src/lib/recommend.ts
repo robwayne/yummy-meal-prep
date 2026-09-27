@@ -2,8 +2,8 @@
  * The recommendation engine. Pure functions over plain data so it's easy to
  * test and reason about.
  */
-import { convert, ingredientMatches, normalizeName } from "./ingredients";
-import { activePlan, fitsDiet, nutritionScore, recipeBalance, type Balance } from "./nutrition";
+import { convert, ingredientMatches, nameWords, normalizeName } from "./ingredients";
+import { activePlan, classify, fitsDiet, nutritionScore, proteinSubstitutes, recipeBalance, type Balance } from "./nutrition";
 import type { CookLogEntry, Database, Diet, Focus, InventoryItem, Recipe, RecipeIngredient } from "./types";
 
 export type MatchStatus = "have" | "low" | "staple" | "missing";
@@ -12,7 +12,12 @@ export type IngredientMatch = {
   ingredient: RecipeIngredient;
   status: MatchStatus;
   items: InventoryItem[];
+  /** Set when a different protein from your kitchen stands in (e.g. wings for thighs). */
+  swappedFor?: InventoryItem;
 };
+
+/** A protein swap applied to a recipe: the recipe's ingredient name → what you have. */
+export type Swap = { from: string; to: string };
 
 export type RecipeMatch = {
   recipe: Recipe;
@@ -26,6 +31,10 @@ export type RecipeMatch = {
   usesExpiring: InventoryItem[];
   /** Food groups on the plate. */
   balance: Balance;
+  /** False when the dish's main protein isn't in your kitchen (it's then never recommended). */
+  proteinAvailable: boolean;
+  /** Set when the main protein is covered by a substitute. */
+  swap?: Swap;
   score: number;
   reasons: string[];
 };
@@ -103,18 +112,38 @@ export function matchIngredient(
   inventory: InventoryItem[],
   staples: string[],
 ): IngredientMatch {
-  const items = inventory.filter((i) => ingredientMatches(ingredient.name, i.name));
+  let items = inventory.filter((i) => ingredientMatches(ingredient.name, i.name));
+  const isProtein = Boolean(classify(ingredient.name).proteinKind);
+  if (items.length === 0 && isProtein) {
+    const subs = proteinSubstitutes(ingredient.name);
+    items = inventory.filter((i) => subs.some((s) => ingredientMatches(s, i.name)));
+  }
   if (items.length === 0) {
     const isStaple = staples.some((s) => ingredientMatches(ingredient.name, s));
     return { ingredient, status: isStaple ? "staple" : "missing", items };
   }
+  // A protein is "swapped" when what you have is a different cut or kind, not the
+  // same thing named more or less specifically (wings for thighs is a swap; wings for
+  // "chicken", or minced beef for ground beef, is not).
+  let swappedFor: InventoryItem | undefined;
+  if (isProtein) {
+    const key = normalizeName(ingredient.name);
+    const wanted = nameWords(ingredient.name);
+    const exact = items.find((i) => {
+      if (normalizeName(i.name) === key) return true;
+      const have = nameWords(i.name);
+      return wanted.every((w) => have.includes(w)) || have.every((w) => wanted.includes(w));
+    });
+    if (exact) items = [exact, ...items.filter((i) => i !== exact)];
+    else swappedFor = items[0];
+  }
   if (ingredient.quantity !== undefined) {
     const have = totalIn(items, ingredient.unit ?? "");
     if (have !== undefined && have + 1e-9 < ingredient.quantity) {
-      return { ingredient, status: "low", items };
+      return { ingredient, status: "low", items, swappedFor };
     }
   }
-  return { ingredient, status: "have", items };
+  return { ingredient, status: "have", items, swappedFor };
 }
 
 /** Tag/cuisine affinity learnt from favourites, ratings and what actually gets cooked. */
@@ -201,9 +230,14 @@ export function matchRecipe(
   const balance = recipeBalance(recipe, (ing) =>
     ingredients.some((m) => m.ingredient === ing && m.status !== "missing"),
   );
+  const mainMatch = balance.mainProtein && ingredients.find((m) => m.ingredient === balance.mainProtein!.ingredient);
   const nutrition = nutritionScore(recipe, balance, ctx.focus ?? "balanced", ctx.diet ?? "everything", usable);
   score += nutrition.score;
   reasons.push(...nutrition.reasons);
+  if (mainMatch?.swappedFor && !reasons.some((r) => r.startsWith("Uses your"))) {
+    score += 10;
+    reasons.push(`Uses your ${mainMatch.swappedFor.name}`);
+  }
 
   if (recipe.favorite) {
     score += 10;
@@ -232,6 +266,8 @@ export function matchRecipe(
     coverage,
     usesExpiring,
     balance,
+    proteinAvailable: !mainMatch || mainMatch.status !== "missing",
+    swap: mainMatch?.swappedFor ? { from: mainMatch.ingredient.name, to: mainMatch.swappedFor.name } : undefined,
     score,
     reasons,
   };
@@ -253,7 +289,8 @@ export type Recommendations = {
 };
 
 export function recommend(ctx: RecommendContext, almostThreshold = 2): Recommendations {
-  const ranked = rankRecipes(ctx);
+  // Never suggest a dish whose main protein you don't have (or can't swap in).
+  const ranked = rankRecipes(ctx).filter((m) => m.proteinAvailable);
   return {
     ready: ranked.filter((m) => m.missing.length === 0),
     almost: ranked.filter((m) => m.missing.length > 0 && m.missing.length <= almostThreshold),

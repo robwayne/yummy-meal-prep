@@ -8,7 +8,16 @@ import { RecipeCard } from "@/components/recipe-card";
 import { Loading } from "@/components/page-state";
 import { FocusPicker } from "@/components/focus-picker";
 import { FOCUS_INFO, fitsDiet } from "@/lib/nutrition";
-import { contextFor, forYou, freshness, recommend, shoppingList, topPicks, type RecipeMatch } from "@/lib/recommend";
+import {
+  contextFor,
+  forYou,
+  freshness,
+  matchRecipe,
+  recommend,
+  shoppingList,
+  topPicks,
+  type RecipeMatch,
+} from "@/lib/recommend";
 import { useDb } from "@/lib/store";
 
 function Section({ title, subtitle, matches }: { title: string; subtitle: string; matches: RecipeMatch[] }) {
@@ -45,7 +54,9 @@ export function CookView() {
   const recs = recommend({ ...ctx, recipes }, missingAllowed);
   const shopping = shoppingList(recs.almost);
   const expiring = db.inventory.filter((i) => freshness(i, db.settings.expiringSoonDays) === "soon");
-  const suggestions = forYou(db.recipes, db.cookLog).filter((r) => fitsDiet(r, ctx.diet ?? "everything"));
+  const suggestions = forYou(db.recipes, db.cookLog).filter(
+    (r) => fitsDiet(r, ctx.diet ?? "everything") && matchRecipe(r, ctx).proteinAvailable,
+  );
   const allTags = [...new Set(db.recipes.flatMap((r) => r.tags))].sort();
 
   return (

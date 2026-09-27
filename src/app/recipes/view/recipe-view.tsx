@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { Loading, NotFound } from "@/components/page-state";
 import { BalanceRow, MatchBar, RecipeCard } from "@/components/recipe-card";
 import { deleteRecipe, rateRecipe, toggleFavorite } from "@/lib/actions";
+import { adaptRecipe } from "@/lib/adapt";
 import { formatDate, totalMinutes } from "@/lib/format";
 import { formatIngredient } from "@/lib/ingredients";
 import { GROUP_INFO, roundItOut } from "@/lib/nutrition";
@@ -33,20 +34,26 @@ export function RecipeView() {
   const id = useSearchParams().get("id");
   const router = useRouter();
   const db = useDb();
-  const recipe = db?.recipes.find((r) => r.id === id);
+  const saved = db?.recipes.find((r) => r.id === id);
+  const match = db && saved ? matchRecipe(saved, contextFor(db)) : undefined;
+  // Shown with your substitute protein, if one is being used (the saved recipe is unchanged).
+  const recipe = saved && adaptRecipe(saved, match?.swap);
 
   useEffect(() => {
     if (recipe) document.title = `${recipe.title} · Yummy Meal Prep`;
-  }, [recipe]);
+  }, [recipe?.title]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!db) return <Loading />;
-  if (!recipe) return <NotFound what="recipe" backHref="/recipes" backLabel="Back to recipes" />;
+  if (!recipe || !match) return <NotFound what="recipe" backHref="/recipes" backLabel="Back to recipes" />;
 
   const ctx = contextFor(db);
-  const match = matchRecipe(recipe, ctx);
   const sides = roundItOut(match.balance, usableInventory(db.inventory), ctx.diet ?? "everything");
   const plan = planConsumption(recipe, db.inventory, db.settings.staples);
-  const similar = similarRecipes(recipe, db.recipes);
+  // Only suggest dishes you could actually make the main protein for.
+  const similar = similarRecipes(saved!, db.recipes, 12)
+    .map((r) => matchRecipe(r, ctx))
+    .filter((m) => m.proteinAvailable)
+    .slice(0, 4);
   const cooked = db.cookLog.filter((c) => c.recipeId === recipe.id).sort((a, b) => b.at.localeCompare(a.at));
 
   return (
@@ -56,6 +63,17 @@ export function RecipeView() {
           <Link href="/recipes" className="text-sm text-stone-500 hover:underline">← Recipe book</Link>
           <h1 className="page-title">{recipe.title}</h1>
           {recipe.description && <p className="text-stone-600 dark:text-stone-400">{recipe.description}</p>}
+          {match.swap && (
+            <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+              🔁 Using your <strong>{match.swap.to}</strong> instead of {match.swap.from}. Cook times may differ a little.
+            </p>
+          )}
+          {!match.proteinAvailable && match.balance.mainProtein && (
+            <p className="rounded-lg bg-stone-100 px-3 py-2 text-sm dark:bg-stone-800">
+              You don&apos;t have {match.balance.mainProtein.ingredient.name} (or a substitute), so this isn&apos;t being
+              recommended right now.
+            </p>
+          )}
           <div className="flex flex-wrap gap-1.5 text-xs">
             <span className="badge badge-muted">Serves {recipe.servings}</span>
             <span className="badge badge-muted">Prep {recipe.prepMinutes} min</span>
@@ -106,7 +124,7 @@ export function RecipeView() {
           <MatchBar match={match} />
           <div className="space-y-2 rounded-lg border border-stone-200 p-3 dark:border-stone-800">
             <p className="text-xs font-medium tracking-wide text-stone-500 uppercase">Plate balance</p>
-            <BalanceRow balance={match.balance} />
+            <BalanceRow balance={match.balance} swap={match.swap} />
             {match.balance.mainProtein && match.balance.mainProtein.kind === "other" && (
               <p className="text-xs text-stone-500">No meat or seafood — protein comes from {match.balance.mainProtein.ingredient.name}.</p>
             )}
@@ -131,7 +149,14 @@ export function RecipeView() {
                   <span className={`w-4 shrink-0 font-bold ${s.className}`} title={s.label}>{s.icon}</span>
                   <span className="min-w-0">
                     <span className={m.status === "missing" && !m.ingredient.optional ? "font-medium" : ""}>
-                      {formatIngredient(m.ingredient)}
+                      {m.swappedFor ? (
+                        <>
+                          {formatIngredient({ ...m.ingredient, name: m.swappedFor.name })}{" "}
+                          <span className="text-amber-700 dark:text-amber-400">(instead of {m.ingredient.name})</span>
+                        </>
+                      ) : (
+                        formatIngredient(m.ingredient)
+                      )}
                     </span>
                     {m.ingredient.note && <span className="text-stone-500">, {m.ingredient.note}</span>}
                     {m.ingredient.optional && <span className="text-stone-400"> (optional)</span>}
@@ -184,8 +209,8 @@ export function RecipeView() {
         <section className="space-y-3">
           <h2 className="section-title">You might also like</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {similar.map((r) => (
-              <RecipeCard key={r.id} recipe={r} />
+            {similar.map((m) => (
+              <RecipeCard key={m.recipe.id} recipe={m.recipe} match={m} />
             ))}
           </div>
         </section>

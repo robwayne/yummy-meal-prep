@@ -201,7 +201,7 @@ export function parseIngredientLines(text: string): ParsedIngredient[] {
 const DESCRIPTORS = new Set([
   "fresh", "freshly", "chopped", "diced", "minced", "sliced", "grated", "shredded", "large",
   "small", "medium", "ripe", "raw", "cooked", "boneless", "skinless", "frozen", "dried", "whole",
-  "finely", "roughly", "thinly", "peeled", "crushed", "ground", "to", "taste", "unsalted", "salted",
+  "finely", "roughly", "thinly", "peeled", "crushed", "to", "taste", "unsalted", "salted",
   "organic", "extra", "virgin", "plain", "cold", "warm", "softened", "melted", "beaten", "lean",
   "the", "and", "or", "for", "serving", "some", "cubed", "halved", "rinsed", "drained", "packed",
   "low", "sodium", "reduced", "fat", "free", "light", "leftover", "day", "old", "store", "bought",
@@ -233,6 +233,14 @@ const SYNONYMS: Record<string, string> = {
   "egg yolk": "egg",
   "egg white": "egg",
   "minced beef": "ground beef",
+  "minced turkey": "ground turkey",
+  "turkey mince": "ground turkey",
+  "minced pork": "ground pork",
+  "pork mince": "ground pork",
+  "minced chicken": "ground chicken",
+  "chicken mince": "ground chicken",
+  "minced lamb": "ground lamb",
+  "lamb mince": "ground lamb",
   "beef mince": "ground beef",
   "hamburger meat": "ground beef",
   "heavy whipping cream": "heavy cream",
@@ -296,12 +304,8 @@ const SYNONYMS: Record<string, string> = {
   "baby spinach": "spinach",
   "sirloin": "steak",
   "ribeye": "steak",
-  "chicken thigh": "chicken",
-  "chicken breast": "chicken",
-  "chicken drumstick": "chicken",
-  "chicken leg": "chicken",
-  "chicken tender": "chicken",
-  "rotisserie chicken": "chicken",
+  "prawn": "shrimp",
+  "king prawn": "shrimp",
 };
 
 /** Multi-word ingredients that must not match their individual words (peanut butter ≠ butter). */
@@ -313,7 +317,7 @@ const DISTINCT_COMPOUNDS = new Set([
   "brown sugar", "powdered sugar", "maple syrup", "corn starch", "cornstarch", "rice vinegar",
   "green bean", "black bean", "kidney bean", "pinto bean", "tortilla chips", "chicken broth",
   "vegetable broth", "beef broth", "ground beef", "ground turkey", "ground pork", "egg noodle",
-  "rice noodle", "coconut cream", "tomato paste", "canned tomato", "garlic powder", "onion powder",
+  "rice noodle", "ground chicken", "ground lamb", "coconut cream", "tomato paste", "canned tomato", "garlic powder", "onion powder",
   "chili powder", "curry powder", "red pepper flake", "lemon zest", "lime zest", "hot dog",
   "hash brown", "pie crust", "pizza dough", "puff pastry", "brown rice", "wild rice",
 ]);
@@ -328,6 +332,20 @@ function singularize(word: string): string {
   if (/ves$/.test(word) && word !== "olives" && word !== "chives") return word.slice(0, -3) + "f";
   if (/s$/.test(word)) return word.slice(0, -1);
   return word;
+}
+
+/** The meaningful words of a name (lowercase, singular, prep words dropped) — no synonyms applied. */
+export function nameWords(name: string): string[] {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\(.*?\)/g, " ")
+    .replace(/[^a-z\s-]/g, " ")
+    .replace(/-/g, " ")
+    .split(/\s+/)
+    .filter((w) => w && !DESCRIPTORS.has(w))
+    .map(singularize);
 }
 
 /** Canonical form of an ingredient name used for matching. */

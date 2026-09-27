@@ -1,8 +1,9 @@
 import Link from "next/link";
 
+import { adaptRecipe } from "@/lib/adapt";
 import { totalMinutes } from "@/lib/format";
 import { GROUP_INFO, recipeBalance, type Balance, type FoodGroup } from "@/lib/nutrition";
-import type { RecipeMatch } from "@/lib/recommend";
+import type { RecipeMatch, Swap } from "@/lib/recommend";
 import type { Recipe } from "@/lib/types";
 
 export function MatchBar({ match }: { match: RecipeMatch }) {
@@ -26,7 +27,7 @@ export function MatchBar({ match }: { match: RecipeMatch }) {
 const GROUPS: FoodGroup[] = ["protein", "veg", "carb", "fat", "fiber"];
 
 /** Five food-group pills: filled when the recipe has it, faded when it doesn't. */
-export function BalanceRow({ balance }: { balance: Balance }) {
+export function BalanceRow({ balance, swap }: { balance: Balance; swap?: Swap }) {
   const main = balance.mainProtein;
   return (
     <div className="flex flex-wrap items-center gap-1" aria-label="Plate balance">
@@ -34,7 +35,9 @@ export function BalanceRow({ balance }: { balance: Balance }) {
         const has = balance.groups[g].length > 0;
         const label =
           g === "protein" && main
-            ? main.ingredient.name
+            ? swap && main.ingredient.name === swap.from
+              ? swap.to
+              : main.ingredient.name
             : g === "veg" && balance.rawVeg
               ? "Veg · raw"
               : GROUP_INFO[g].label;
@@ -53,7 +56,9 @@ export function BalanceRow({ balance }: { balance: Balance }) {
   );
 }
 
-export function RecipeCard({ recipe, match }: { recipe: Recipe; match?: RecipeMatch }) {
+export function RecipeCard({ recipe: saved, match }: { recipe: Recipe; match?: RecipeMatch }) {
+  // Show the dish with your substitute protein when one is being used.
+  const recipe = adaptRecipe(saved, match?.swap);
   return (
     <Link
       href={`/recipes/view?id=${recipe.id}`}
@@ -66,6 +71,11 @@ export function RecipeCard({ recipe, match }: { recipe: Recipe; match?: RecipeMa
         {recipe.favorite && <span title="Favourite" aria-label="Favourite">❤️</span>}
       </div>
       {recipe.description && <p className="line-clamp-2 text-sm text-stone-500">{recipe.description}</p>}
+      {match?.swap && (
+        <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+          🔁 Made with your {match.swap.to} instead of {match.swap.from}
+        </p>
+      )}
       <div className="flex flex-wrap gap-1.5 text-xs">
         <span className="badge badge-muted">⏱ {totalMinutes(recipe)}</span>
         <span className="badge badge-muted">{recipe.cuisine}</span>
@@ -74,7 +84,7 @@ export function RecipeCard({ recipe, match }: { recipe: Recipe; match?: RecipeMa
           <span key={t} className="badge badge-muted">#{t}</span>
         ))}
       </div>
-      <BalanceRow balance={match?.balance ?? recipeBalance(recipe)} />
+      <BalanceRow balance={match?.balance ?? recipeBalance(recipe)} swap={match?.swap} />
       {match && (
         <div className="mt-auto space-y-2">
           <MatchBar match={match} />

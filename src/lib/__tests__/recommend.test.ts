@@ -137,3 +137,49 @@ describe("content-based suggestions", () => {
     expect(forYou([a, b, c], [], 6, NOW).map((r) => r.id)).toEqual(["b"]);
   });
 });
+
+describe("main protein", () => {
+  const steakDinner = recipe("steak", "2 steaks\n1 lb potatoes\nbutter\nsalt", { title: "Steak with Potatoes" });
+  const thighs = recipe("thighs", "4 chicken thighs\n2 cups rice\nbutter", {
+    title: "Garlic Butter Chicken Thighs",
+    steps: ["Season the chicken thighs.", "Sear the thighs skin-side down.", "Rest each thigh."],
+  });
+  const tacos = recipe("tacos", "1 lb ground beef\ntortillas");
+  const fish = recipe("fish", "2 cod fillets\nlemon");
+
+  it("never recommends a dish without its main protein", () => {
+    const recs = recommend(ctx([item("potatoes", 2, "kg"), item("butter"), item("rice", 1, "kg")], [steakDinner]));
+    expect([...recs.ready, ...recs.almost, ...recs.stretch]).toHaveLength(0);
+  });
+
+  it("swaps chicken cuts and says so", () => {
+    const recs = recommend(ctx([item("chicken wings", 1.5, "kg"), item("rice", 4, "kg"), item("butter")], [thighs]));
+    const m = recs.ready[0];
+    expect(m.swap).toEqual({ from: "chicken thighs", to: "chicken wings" });
+    expect(m.reasons).toContain("Uses your chicken wings");
+  });
+
+  it("does not call it a swap when you have the exact cut or the recipe is generic", () => {
+    const exact = recommend(ctx([item("chicken thighs", 4), item("chicken wings", 1, "kg"), item("rice", 1, "kg"), item("butter")], [thighs]));
+    expect(exact.ready[0].swap).toBeUndefined();
+    const generic = recipe("g", "1 lb chicken\nrice");
+    expect(recommend(ctx([item("chicken wings", 1, "kg"), item("rice", 1, "kg")], [generic])).ready[0].swap).toBeUndefined();
+  });
+
+  it("swaps ground meats and white fish", () => {
+    const r = recommend(ctx([item("minced turkey", 500, "g"), item("tortillas", 8), item("tilapia", 2), item("lemon")], [tacos, fish]));
+    expect(r.ready.map((m) => m.swap?.to).sort()).toEqual(["minced turkey", "tilapia"]);
+  });
+});
+
+it("does not let chicken stand in for ground beef", () => {
+  const bolognese = recipe("bolo", "1 lb ground beef\nspaghetti");
+  const recs = recommend(ctx([item("chicken wings", 1, "kg"), item("spaghetti", 500, "g")], [bolognese]));
+  expect([...recs.ready, ...recs.almost, ...recs.stretch]).toHaveLength(0);
+});
+
+it("minced beef for ground beef is not a swap", () => {
+  const bolognese = recipe("bolo", "1 lb ground beef\nspaghetti");
+  const m = recommend(ctx([item("minced beef", 500, "g"), item("spaghetti", 500, "g")], [bolognese])).ready[0];
+  expect(m.swap).toBeUndefined();
+});

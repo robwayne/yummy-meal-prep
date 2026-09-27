@@ -41,7 +41,7 @@ describe("normalizeName", () => {
   it("strips descriptors, plurals and applies synonyms", () => {
     expect(normalizeName("Fresh Tomatoes")).toBe("tomato");
     expect(normalizeName("Scallions")).toBe("green onion");
-    expect(normalizeName("boneless skinless chicken thighs")).toBe("chicken");
+    expect(normalizeName("boneless skinless chicken thighs")).toBe("chicken thigh");
     expect(normalizeName("Berries")).toBe("berry");
   });
 });
@@ -99,5 +99,18 @@ describe("canned vs fresh", () => {
     expect(ingredientMatches("tomatoes", "crushed tomatoes")).toBe(false);
     expect(ingredientMatches("crushed tomatoes", "canned tomatoes")).toBe(true);
     expect(normalizeName("minced garlic")).toBe("garlic");
+  });
+});
+
+describe("ground meats and spices", () => {
+  it("keeps ground meats distinct but still matches ground spices", () => {
+    expect(ingredientMatches("ground beef", "minced beef")).toBe(true);
+    expect(ingredientMatches("ground turkey", "minced turkey")).toBe(true);
+    expect(ingredientMatches("ground beef", "chicken wings")).toBe(false);
+    expect(ingredientMatches("chicken thighs", "ground chicken")).toBe(false);
+    expect(ingredientMatches("beef", "ground beef")).toBe(true);
+    expect(ingredientMatches("cumin", "ground cumin")).toBe(true);
+    expect(ingredientMatches("ground cumin", "cumin")).toBe(true);
+    expect(ingredientMatches("pepper", "ground black pepper")).toBe(true);
   });
 });

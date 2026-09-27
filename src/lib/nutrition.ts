@@ -243,6 +243,24 @@ function sideRank(item: InventoryItem): number {
 
 export type SideSuggestion = { group: FoodGroup; items: InventoryItem[] };
 
+/** Proteins that can stand in for each other in a recipe. */
+const PROTEIN_SWAPS: string[][] = [
+  [
+    "chicken thigh", "chicken breast", "chicken wing", "chicken drumstick", "chicken leg", "chicken tender",
+    "whole chicken", "rotisserie chicken", "chicken quarter",
+  ],
+  ["ground beef", "ground turkey", "ground pork", "ground chicken", "ground lamb"],
+  ["cod", "tilapia", "haddock", "halibut", "sea bass", "pollock", "hake", "white fish"],
+  ["salmon", "trout", "arctic char"],
+  ["shrimp", "scallop"],
+];
+
+/** Other proteins that could replace this one, or [] if it isn't a swappable protein. */
+export function proteinSubstitutes(name: string): string[] {
+  const group = PROTEIN_SWAPS.find((g) => g.some((m) => ingredientMatches(m, name)));
+  return group ? group.filter((m) => !ingredientMatches(m, name)) : [];
+}
+
 /** Ingredients that make no sense served as a side on their own. */
 const NOT_A_SIDE = ["canned tomato", "tomato sauce", "tomato paste", "flour", "oil", "olive oil", "butter", "cream"];
 
