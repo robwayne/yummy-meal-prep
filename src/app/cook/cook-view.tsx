@@ -4,6 +4,7 @@ import Form from "next/form";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
+import { LogRecommendations } from "@/components/log-recommendations";
 import { RecipeCard } from "@/components/recipe-card";
 import { Loading } from "@/components/page-state";
 import { FocusPicker } from "@/components/focus-picker";
@@ -20,7 +21,17 @@ import {
 } from "@/lib/recommend";
 import { useDb } from "@/lib/store";
 
-function Section({ title, subtitle, matches }: { title: string; subtitle: string; matches: RecipeMatch[] }) {
+function Section({
+  title,
+  subtitle,
+  matches,
+  feedback = true,
+}: {
+  title: string;
+  subtitle: string;
+  matches: RecipeMatch[];
+  feedback?: boolean;
+}) {
   if (!matches.length) return null;
   return (
     <section className="space-y-3">
@@ -30,7 +41,7 @@ function Section({ title, subtitle, matches }: { title: string; subtitle: string
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {matches.map((m) => (
-          <RecipeCard key={m.recipe.id} recipe={m.recipe} match={m} />
+          <RecipeCard key={m.recipe.id} recipe={m.recipe} match={m} feedback={feedback} />
         ))}
       </div>
     </section>
@@ -52,6 +63,7 @@ export function CookView() {
 
   const ctx = contextFor(db);
   const recs = recommend({ ...ctx, recipes }, missingAllowed);
+  const picks = topPicks(recs);
   const shopping = shoppingList(recs.almost);
   const expiring = db.inventory.filter((i) => freshness(i, db.settings.expiringSoonDays) === "soon");
   const suggestions = forYou(db.recipes, db.cookLog).filter(
@@ -64,7 +76,7 @@ export function CookView() {
       <div>
         <h1 className="page-title">What can I cook?</h1>
         <p className="text-stone-500">
-          Recommendations based on the {db.inventory.length} items in your kitchen, what&apos;s about to expire, this week&apos;s focus and what you like.
+          Recommendations based on the {db.inventory.length} items in your kitchen, what&apos;s about to expire, this week&apos;s focus and what you like. Tap 👍 or 👎 to teach it your taste.
         </p>
       </div>
 
@@ -118,8 +130,9 @@ export function CookView() {
       <Section
         title={`Top picks · ${FOCUS_INFO[ctx.focus ?? "balanced"].label}`}
         subtitle="The best fits for this week's focus, whether you can make them now or need one or two things."
-        matches={topPicks(recs)}
+        matches={picks}
       />
+      <LogRecommendations matches={picks} focus={ctx.focus ?? "balanced"} />
       <Section title="Ready to cook" subtitle="You have everything you need (pantry staples assumed)." matches={recs.ready} />
       <Section
         title="Almost there"
@@ -158,7 +171,7 @@ export function CookView() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {suggestions.map((r) => (
-              <RecipeCard key={r.id} recipe={r} />
+              <RecipeCard key={r.id} recipe={r} feedback />
             ))}
           </div>
         </section>

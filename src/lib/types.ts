@@ -69,6 +69,8 @@ export type Recipe = {
   ingredients: RecipeIngredient[];
   steps: string[];
   favorite: boolean;
+  /** "Not for me": never recommended, and similar dishes are nudged down. */
+  disliked?: boolean;
   /** 1–5 */
   rating?: number;
   source: "seed" | "user";
@@ -113,6 +115,25 @@ export type Settings = {
   lowAt?: Record<string, { quantity: number; unit: string }>;
 };
 
+/** A dish the app recommended (top picks), at most once per recipe per day. */
+export type RecommendationLogEntry = {
+  id: string;
+  /** YYYY-MM-DD */
+  date: string;
+  recipeId: string;
+  recipeTitle: string;
+  focus: Focus;
+};
+
+/** You saving or disliking a recipe (and undoing it). */
+export type FeedbackEntry = {
+  id: string;
+  at: string;
+  recipeId: string;
+  recipeTitle: string;
+  kind: "saved" | "unsaved" | "disliked" | "undisliked";
+};
+
 /** An item on the grocery list. */
 export type ShoppingListItem = {
   id: string;
@@ -137,5 +158,7 @@ export type Database = {
   cookLog: CookLogEntry[];
   /** Optional so older saved data still loads. */
   shoppingList?: ShoppingListItem[];
+  recommendationLog?: RecommendationLogEntry[];
+  feedback?: FeedbackEntry[];
   settings: Settings;
 };

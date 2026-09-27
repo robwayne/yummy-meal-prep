@@ -19,7 +19,7 @@ export function RecipesView() {
 
   const q = sp.get("q")?.trim().toLowerCase() ?? "";
   const tag = sp.get("tag") ?? "";
-  const favOnly = sp.get("fav") === "1";
+  const show = sp.get("show") ?? (sp.get("fav") === "1" ? "saved" : "all");
   const sortParam = sp.get("sort") ?? "match";
   const sort = (sortParam in SORTS ? sortParam : "match") as keyof typeof SORTS;
 
@@ -29,7 +29,7 @@ export function RecipesView() {
 
   const qName = q ? normalizeName(q) : "";
   const results = db.recipes
-    .filter((r) => !favOnly || r.favorite)
+    .filter((r) => (show === "saved" ? r.favorite : show === "disliked" ? r.disliked : true))
     .filter((r) => !tag || r.tags.includes(tag))
     .filter(
       (r) =>
@@ -77,10 +77,11 @@ export function RecipesView() {
             <option key={k} value={k}>{v}</option>
           ))}
         </select>
-        <label className="flex items-center gap-2 text-sm sm:col-span-2">
-          <input type="checkbox" name="fav" value="1" defaultChecked={favOnly} className="accent-brand-600" />
-          Favourites
-        </label>
+        <select name="show" defaultValue={show} className="input sm:col-span-2" aria-label="Show">
+          <option value="all">All recipes</option>
+          <option value="saved">👍 Saved</option>
+          <option value="disliked">👎 Disliked</option>
+        </select>
         <button className="btn sm:col-span-1">Go</button>
       </Form>
 

@@ -9,11 +9,13 @@ import { parseInventoryText } from "./inventory-io";
 import { usualPurchase } from "./shopping";
 import { todayIso } from "./recommend";
 import { isDatabase, migrateDatabase, newId } from "./database";
-import { mutate, replaceDb } from "./store";
+import { isFocus, parseMealHistory } from "./meal-history";
+import { getDb, mutate, replaceDb } from "./store";
 import {
   LOCATIONS,
   type Database,
   type Diet,
+  type FeedbackEntry,
   type Focus,
   type InventoryEvent,
   type InventoryItem,
@@ -295,11 +297,106 @@ export function deleteRecipe(id: string): void {
   });
 }
 
+function logFeedback(db: Database, recipe: Recipe, kind: FeedbackEntry["kind"]) {
+  (db.feedback ??= []).push({ id: newId(), at: new Date().toISOString(), recipeId: recipe.id, recipeTitle: recipe.title, kind });
+}
+
+/** 👍 Save a recipe (a favourite): boosts it and dishes like it. Clears a dislike. */
 export function toggleFavorite(id: string): void {
   mutate((db) => {
     const r = db.recipes.find((x) => x.id === id);
-    if (r) r.favorite = !r.favorite;
+    if (!r) return;
+    r.favorite = !r.favorite;
+    logFeedback(db, r, r.favorite ? "saved" : "unsaved");
+    if (r.favorite && r.disliked) {
+      r.disliked = false;
+      logFeedback(db, r, "undisliked");
+    }
   });
+}
+
+/** 👎 Not for me: never recommended again (until undone), and similar dishes are nudged down. */
+export function toggleDislike(id: string): void {
+  mutate((db) => {
+    const r = db.recipes.find((x) => x.id === id);
+    if (!r) return;
+    r.disliked = !r.disliked;
+    logFeedback(db, r, r.disliked ? "disliked" : "undisliked");
+    if (r.disliked && r.favorite) {
+      r.favorite = false;
+      logFeedback(db, r, "unsaved");
+    }
+  });
+}
+
+/**
+ * Remember today's recommendations (once per recipe per day). Does nothing —
+ * and doesn't re-render — when they're already recorded.
+ */
+export function logRecommendations(recipes: { id: string; title: string }[], focus: Focus): void {
+  const today = todayIso();
+  const known = new Set((getDb().recommendationLog ?? []).filter((e) => e.date === today).map((e) => e.recipeId));
+  const fresh = recipes.filter((r) => !known.has(r.id));
+  if (!fresh.length) return;
+  mutate((db) => {
+    const log = (db.recommendationLog ??= []);
+    for (const r of fresh) log.push({ id: newId(), date: today, recipeId: r.id, recipeTitle: r.title, focus });
+    // Keep the last year only.
+    const cutoff = todayIso(new Date(Date.now() - 365 * 24 * 60 * 60 * 1000));
+    db.recommendationLog = log.filter((e) => e.date >= cutoff);
+  });
+}
+
+/**
+ * Import a meal history .txt: adds recommendations and cooked meals that
+ * aren't already recorded, and applies saved/disliked to matching recipes
+ * (by title). Lines for recipes that aren't in your book are counted as skipped.
+ */
+export function importMealHistory(text: string): ActionState {
+  const lines = parseMealHistory(text);
+  if (!lines.length) return { ok: false, message: "Couldn't find any meal history in that file" };
+  const result = mutate((db) => {
+    const byTitle = new Map(db.recipes.map((r) => [r.title.toLowerCase(), r]));
+    let added = 0;
+    let skipped = 0;
+    for (const l of lines) {
+      const recipe = byTitle.get(l.title.toLowerCase());
+      if (l.kind === "recommended") {
+        if (!recipe) { skipped++; continue; }
+        const log = (db.recommendationLog ??= []);
+        if (log.some((e) => e.date === l.date && e.recipeId === recipe.id)) continue;
+        log.push({ id: newId(), date: l.date, recipeId: recipe.id, recipeTitle: recipe.title, focus: isFocus(l.detail) ? l.detail : "balanced" });
+        added++;
+      } else if (l.kind === "cooked") {
+        const title = recipe?.title ?? l.title;
+        if (db.cookLog.some((c) => c.at.slice(0, 10) === l.date && c.recipeTitle.toLowerCase() === title.toLowerCase())) continue;
+        db.cookLog.push({ id: newId(), recipeId: recipe?.id ?? "", recipeTitle: title, at: `${l.date}T12:00:00.000Z` });
+        added++;
+      } else {
+        if (!recipe) { skipped++; continue; }
+        const at = `${l.date}T12:00:00.000Z`;
+        if (l.kind === "saved" && !recipe.favorite) {
+          recipe.favorite = true;
+          recipe.disliked = false;
+          db.feedback = [...(db.feedback ?? []), { id: newId(), at, recipeId: recipe.id, recipeTitle: recipe.title, kind: "saved" }];
+          added++;
+        } else if (l.kind === "disliked" && !recipe.disliked) {
+          recipe.disliked = true;
+          recipe.favorite = false;
+          db.feedback = [...(db.feedback ?? []), { id: newId(), at, recipeId: recipe.id, recipeTitle: recipe.title, kind: "disliked" }];
+          added++;
+        }
+      }
+    }
+    db.cookLog.sort((a, b) => a.at.localeCompare(b.at));
+    (db.recommendationLog ?? []).sort((a, b) => a.date.localeCompare(b.date));
+    return { added, skipped };
+  });
+  const skippedNote = result.skipped ? ` (${result.skipped} skipped: recipe not in your book)` : "";
+  return {
+    ok: true,
+    message: result.added ? `Imported ${result.added} entr${result.added === 1 ? "y" : "ies"}${skippedNote}` : `Nothing new to import${skippedNote}`,
+  };
 }
 
 /** Set a 1–5 rating; choosing the current rating again clears it. */

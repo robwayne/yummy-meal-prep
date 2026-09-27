@@ -8,6 +8,8 @@ import { formatDate, formatDateTime } from "@/lib/format";
 import { productHistory } from "@/lib/history";
 import { formatQuantity } from "@/lib/ingredients";
 import { Loading } from "@/components/page-state";
+
+import { MealHistoryPanel } from "./meal-history-panel";
 import { useDb } from "@/lib/store";
 import { EVENT_TYPES, LOCATION_LABELS, type InventoryEventType } from "@/lib/types";
 
@@ -22,7 +24,7 @@ const EVENT_STYLE: Record<InventoryEventType, { label: string; badge: string }> 
   removed: { label: "Removed", badge: "badge-muted" },
 };
 
-const TABS = { products: "Products", activity: "Activity log", meals: "Meals cooked" } as const;
+const TABS = { products: "Products", activity: "Activity log", meals: "Meals" } as const;
 
 export function HistoryView() {
   const sp = useSearchParams();
@@ -40,7 +42,6 @@ export function HistoryView() {
     .reverse()
     .filter((e) => !q || e.itemName.toLowerCase().includes(q))
     .filter((e) => !type || e.type === type);
-  const meals = [...db.cookLog].reverse();
 
   const tossed = db.events.filter((e) => e.type === "expired").length;
   const stocked = db.events.filter((e) => e.type === "added" || e.type === "restocked").length;
@@ -193,28 +194,7 @@ export function HistoryView() {
         </div>
       )}
 
-      {tab === "meals" && (
-        <div className="card">
-          {meals.length === 0 ? (
-            <p className="p-8 text-center text-stone-500">
-              Nothing cooked yet. Hit &ldquo;I cooked this&rdquo; on a recipe to log it.
-            </p>
-          ) : (
-            <ul className="divide-y divide-stone-100 dark:divide-stone-800">
-              {meals.map((m) => (
-                <li key={m.id} className="flex items-center justify-between gap-3 p-3 text-sm">
-                  {db.recipes.some((r) => r.id === m.recipeId) ? (
-                    <Link href={`/recipes/view?id=${m.recipeId}`} className="font-medium hover:underline">{m.recipeTitle}</Link>
-                  ) : (
-                    <span className="font-medium">{m.recipeTitle}</span>
-                  )}
-                  <span className="text-xs text-stone-400">{formatDateTime(m.at)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
+      {tab === "meals" && <MealHistoryPanel db={db} />}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { ExpiryBadge } from "@/components/badges";
 import { FocusSummary } from "@/components/focus-picker";
+import { LogRecommendations } from "@/components/log-recommendations";
 import { RecipeCard } from "@/components/recipe-card";
 import { formatDateTime } from "@/lib/format";
 import { Loading } from "@/components/page-state";
@@ -16,7 +17,8 @@ export function HomeView() {
   if (!db) return <Loading />;
 
   const soonDays = db.settings.expiringSoonDays;
-  const recs = recommend(contextFor(db));
+  const ctx = contextFor(db);
+  const recs = recommend(ctx);
   const top = topPicks(recs);
   const vitalLow = runningLow(db).filter((l) => l.vital);
   const attention = db.inventory
@@ -51,6 +53,7 @@ export function HomeView() {
         </div>
       </section>
 
+      <LogRecommendations matches={top} focus={ctx.focus ?? "balanced"} />
       {vitalLow.length > 0 && (
         <Link
           href="/groceries"
@@ -81,7 +84,7 @@ export function HomeView() {
           {top.length ? (
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {top.map((m) => (
-                <RecipeCard key={m.recipe.id} recipe={m.recipe} match={m} />
+                <RecipeCard key={m.recipe.id} recipe={m.recipe} match={m} feedback />
               ))}
             </div>
           ) : (

@@ -6,7 +6,7 @@ import { useEffect } from "react";
 
 import { Loading, NotFound } from "@/components/page-state";
 import { BalanceRow, MatchBar, RecipeCard } from "@/components/recipe-card";
-import { deleteRecipe, rateRecipe, toggleFavorite } from "@/lib/actions";
+import { deleteRecipe, rateRecipe, toggleDislike, toggleFavorite } from "@/lib/actions";
 import { adaptRecipe } from "@/lib/adapt";
 import { formatDate, totalMinutes } from "@/lib/format";
 import { formatIngredient } from "@/lib/ingredients";
@@ -63,6 +63,11 @@ export function RecipeView() {
           <Link href="/recipes" className="text-sm text-stone-500 hover:underline">← Recipe book</Link>
           <h1 className="page-title">{recipe.title}</h1>
           {recipe.description && <p className="text-stone-600 dark:text-stone-400">{recipe.description}</p>}
+          {recipe.disliked && (
+            <p className="rounded-lg bg-stone-100 px-3 py-2 text-sm dark:bg-stone-800">
+              👎 You marked this &ldquo;not for me&rdquo;, so it&apos;s never recommended. Tap &ldquo;Disliked (undo)&rdquo; to change that.
+            </p>
+          )}
           {match.swap && (
             <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
               🔁 Using your <strong>{match.swap.to}</strong> instead of {match.swap.from}. Cook times may differ a little.
@@ -87,7 +92,16 @@ export function RecipeView() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" className="btn" onClick={() => toggleFavorite(recipe.id)} aria-pressed={recipe.favorite}>
-            {recipe.favorite ? "❤️ Favourite" : "🤍 Favourite"}
+            {recipe.favorite ? "👍 Saved" : "👍 Save"}
+          </button>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => toggleDislike(recipe.id)}
+            aria-pressed={Boolean(recipe.disliked)}
+            title="Stop recommending this, and show fewer dishes like it"
+          >
+            {recipe.disliked ? "👎 Disliked (undo)" : "👎 Not for me"}
           </button>
           <div className="flex items-center rounded-lg border border-stone-300 px-1 dark:border-stone-700" aria-label="Rating">
             {[1, 2, 3, 4, 5].map((n) => (

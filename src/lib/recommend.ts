@@ -4,7 +4,16 @@
  */
 import { convert, ingredientMatches, nameWords, normalizeName } from "./ingredients";
 import { activePlan, classify, fitsDiet, nutritionScore, proteinSubstitutes, recipeBalance, type Balance } from "./nutrition";
-import type { CookLogEntry, Database, Diet, Focus, InventoryItem, Recipe, RecipeIngredient } from "./types";
+import type {
+  CookLogEntry,
+  Database,
+  Diet,
+  Focus,
+  InventoryItem,
+  Recipe,
+  RecipeIngredient,
+  RecommendationLogEntry,
+} from "./types";
 
 export type MatchStatus = "have" | "low" | "staple" | "missing";
 
@@ -48,6 +57,8 @@ export type RecommendContext = {
   /** This week's priority and diet (defaults: balanced, no restrictions). */
   focus?: Focus;
   diet?: Diet;
+  /** What was recommended on previous days (to avoid suggesting the same thing forever). */
+  recommendationLog?: RecommendationLogEntry[];
   now?: Date;
 };
 
@@ -64,6 +75,7 @@ export function contextFor(db: Database, now = new Date()): RecommendContext {
     expiringSoonDays: db.settings.expiringSoonDays,
     focus,
     diet,
+    recommendationLog: db.recommendationLog,
     now,
   };
 }
@@ -157,6 +169,7 @@ export function tasteProfile(recipes: Recipe[], cookLog: CookLogEntry[]): Map<st
   const byId = new Map(recipes.map((r) => [r.id, r]));
   for (const r of recipes) {
     if (r.favorite) bump(r, 3);
+    if (r.disliked) bump(r, -3);
     if (r.rating) bump(r, r.rating - 3);
   }
   for (const c of cookLog) {
@@ -184,6 +197,17 @@ function daysSinceCooked(recipeId: string, cookLog: CookLogEntry[], now: Date): 
     if (latest === undefined || t > latest) latest = t;
   }
   return latest === undefined ? undefined : (now.getTime() - latest) / DAY;
+}
+
+/** Distinct days in the last two weeks this dish was recommended since you last cooked it. */
+function recentRecommendationDays(recipeId: string, ctx: RecommendContext, now: Date): number {
+  const log = ctx.recommendationLog;
+  if (!log?.length) return 0;
+  const cooked = ctx.cookLog.filter((c) => c.recipeId === recipeId).map((c) => c.at.slice(0, 10));
+  const lastCooked = cooked.sort().at(-1) ?? "";
+  const from = todayIso(new Date(now.getTime() - 14 * DAY));
+  const days = new Set(log.filter((e) => e.recipeId === recipeId && e.date >= from && e.date > lastCooked).map((e) => e.date));
+  return days.size;
 }
 
 export function matchRecipe(
@@ -249,7 +273,14 @@ export function matchRecipe(
   if (aff > 0) {
     score += Math.min(15, aff * 5);
     if (aff >= 1 && !recipe.favorite) reasons.push("Matches what you like to cook");
+  } else if (aff < 0) {
+    // Resembles dishes you've marked "not for me".
+    score += Math.max(-15, aff * 5);
   }
+
+  // Recommended on several recent days but never cooked? Let it rest for a while.
+  const shown = recentRecommendationDays(recipe.id, ctx, now);
+  if (shown >= 4) score -= Math.min(15, (shown - 3) * 3);
 
   const since = daysSinceCooked(recipe.id, ctx.cookLog, now);
   if (since !== undefined && since < 3) {
@@ -277,7 +308,7 @@ export function rankRecipes(ctx: RecommendContext): RecipeMatch[] {
   const profile = tasteProfile(ctx.recipes, ctx.cookLog);
   const diet = ctx.diet ?? "everything";
   return ctx.recipes
-    .filter((r) => fitsDiet(r, diet))
+    .filter((r) => !r.disliked && fitsDiet(r, diet))
     .map((r) => matchRecipe(r, ctx, profile))
     .sort((a, b) => b.score - a.score || a.missing.length - b.missing.length);
 }
@@ -344,7 +375,7 @@ function jaccard(a: Set<string>, b: Set<string>): number {
 export function similarRecipes(target: Recipe, recipes: Recipe[], limit = 4): Recipe[] {
   const tf = recipeFeatures(target);
   return recipes
-    .filter((r) => r.id !== target.id)
+    .filter((r) => r.id !== target.id && !r.disliked)
     .map((r) => ({ r, s: similarity(target, tf, r, recipeFeatures(r)) }))
     .filter((x) => x.s > 0.1)
     .sort((a, b) => b.s - a.s)
@@ -364,6 +395,7 @@ export function forYou(recipes: Recipe[], cookLog: CookLogEntry[], limit = 6, no
   const seedFeatures = seeds.map((s) => [s, recipeFeatures(s)] as const);
   const seedIds = new Set(seeds.map((s) => s.id));
   return recipes
+    .filter((r) => !r.disliked)
     .filter((r) => !seedIds.has(r.id))
     .filter((r) => {
       const since = daysSinceCooked(r.id, cookLog, now);
