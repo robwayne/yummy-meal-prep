@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --color-brand-50: #f0fdf4;
+  --color-brand-100: #dcfce7;
+  --color-brand-200: #bbf7d0;
+  --color-brand-500: #22a55a;
+  --color-brand-600: #16883f;
+  --color-brand-700: #146c35;
+  --color-brand-900: #0f3d22;
+}
+
+:root {
+  color-scheme: light dark;
+}
+
+body {
+  @apply bg-stone-50 text-stone-900 dark:bg-stone-950 dark:text-stone-100;
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-stone-200 bg-white shadow-sm dark:border-stone-800 dark:bg-stone-900;
+  }
+  .input {
+    @apply w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm shadow-xs outline-none
+      placeholder:text-stone-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20
+      dark:border-stone-700 dark:bg-stone-950;
+  }
+  .label {
+    @apply mb-1 block text-xs font-medium tracking-wide text-stone-600 uppercase dark:text-stone-400;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-stone-300 bg-white px-3 py-2
+      text-sm font-medium text-stone-800 shadow-xs transition hover:bg-stone-100 disabled:opacity-50
+      dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:hover:bg-stone-800;
+  }
+  .btn-primary {
+    @apply border-brand-600 bg-brand-600 text-white hover:bg-brand-700 dark:border-brand-600 dark:bg-brand-600
+      dark:hover:bg-brand-700;
+  }
+  .btn-danger {
+    @apply text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950;
+  }
+  .btn-sm {
+    @apply px-2 py-1 text-xs;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap;
+  }
+  .badge-muted {
+    @apply bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300;
+  }
+  .badge-green {
+    @apply bg-brand-100 text-brand-700 dark:bg-brand-900 dark:text-brand-200;
+  }
+  .badge-amber {
+    @apply bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300;
+  }
+  .badge-red {
+    @apply bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300;
+  }
+  .page-title {
+    @apply text-2xl font-bold tracking-tight sm:text-3xl;
+  }
+  .section-title {
+    @apply text-lg font-semibold tracking-tight;
+  }
+}
