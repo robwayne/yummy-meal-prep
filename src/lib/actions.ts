@@ -622,3 +622,15 @@ export function setLowThreshold(name: string, quantity: number | undefined, unit
     db.settings.lowAt = lowAt;
   });
 }
+
+/** Save an online recipe into your book (once). Returns the saved recipe's id. */
+export function saveOnlineRecipe(recipe: Recipe): string {
+  return mutate((db) => {
+    const existing = db.recipes.find((r) => r.externalId && r.externalId === recipe.externalId);
+    if (existing) return existing.id;
+    const now = new Date().toISOString();
+    const saved: Recipe = { ...recipe, id: newId(), source: "online", favorite: false, disliked: false, createdAt: now, updatedAt: now };
+    db.recipes.push(saved);
+    return saved.id;
+  });
+}

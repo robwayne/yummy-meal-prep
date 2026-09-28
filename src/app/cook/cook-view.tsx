@@ -12,6 +12,7 @@ import { FOCUS_INFO, fitsDiet } from "@/lib/nutrition";
 import {
   contextFor,
   forYou,
+  isSnack,
   freshness,
   matchRecipe,
   recommend,
@@ -61,13 +62,14 @@ export function CookView() {
     .filter((r) => !maxTime || r.prepMinutes + r.cookMinutes <= maxTime)
     .filter((r) => !tag || r.tags.includes(tag));
 
-  const ctx = contextFor(db);
+  const kind = sp.get("type") === "snack" ? "snack" : "meal";
+  const ctx = { ...contextFor(db), kind } as const;
   const recs = recommend({ ...ctx, recipes }, missingAllowed);
   const picks = topPicks(recs);
   const shopping = shoppingList(recs.almost);
   const expiring = db.inventory.filter((i) => freshness(i, db.settings.expiringSoonDays) === "soon");
   const suggestions = forYou(db.recipes, db.cookLog).filter(
-    (r) => fitsDiet(r, ctx.diet ?? "everything") && matchRecipe(r, ctx).proteinAvailable,
+    (r) => isSnack(r) === (kind === "snack") && fitsDiet(r, ctx.diet ?? "everything") && matchRecipe(r, ctx).proteinAvailable,
   );
   const allTags = [...new Set(db.recipes.flatMap((r) => r.tags))].sort();
 
@@ -80,9 +82,24 @@ export function CookView() {
         </p>
       </div>
 
-      <FocusPicker plan={db.settings.plan} />
+      <div className="flex rounded-xl bg-stone-200/60 p-1 text-sm font-medium dark:bg-stone-800" role="tablist">
+        {(["meal", "snack"] as const).map((k) => (
+          <Link
+            key={k}
+            href={k === "snack" ? "/cook?type=snack" : "/cook"}
+            role="tab"
+            aria-selected={kind === k}
+            className={`flex-1 rounded-lg py-2 text-center ${kind === k ? "bg-white shadow-sm dark:bg-stone-950" : "text-stone-500"}`}
+          >
+            {k === "meal" ? "🍽 Meals" : "🍪 Snacks & treats"}
+          </Link>
+        ))}
+      </div>
+
+      {kind === "meal" && <FocusPicker plan={db.settings.plan} />}
 
       <Form action="/cook" className="card flex flex-wrap items-end gap-3 p-4">
+        {kind === "snack" && <input type="hidden" name="type" value="snack" />}
         <div>
           <label className="label" htmlFor="time">Time available</label>
           <select id="time" name="time" defaultValue={String(maxTime || "")} className="input">
@@ -128,8 +145,12 @@ export function CookView() {
       )}
 
       <Section
-        title={`Top picks · ${FOCUS_INFO[ctx.focus ?? "balanced"].label}`}
-        subtitle="The best fits for this week's focus, whether you can make them now or need one or two things."
+        title={kind === "snack" ? "Top snack picks" : `Top picks · ${FOCUS_INFO[ctx.focus ?? "balanced"].label}`}
+        subtitle={
+          kind === "snack"
+            ? "Snacks and treats you can make now or with one or two things."
+            : "The best fits for this week's focus, whether you can make them now or need one or two things."
+        }
         matches={picks}
       />
       <LogRecommendations matches={picks} focus={ctx.focus ?? "balanced"} />

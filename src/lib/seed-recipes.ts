@@ -349,7 +349,7 @@ pepper`,
     title: "Banana Bread",
     description: "Turns spotty bananas into the best snack in the house.",
     servings: 8, prepMinutes: 15, cookMinutes: 60, cuisine: "American",
-    tags: ["baking", "sweet", "vegetarian", "use-it-up"],
+    tags: ["snack", "baking", "sweet", "vegetarian", "use-it-up"],
     ingredients: `3 bananas
 1/3 cup butter
 3/4 cup sugar
@@ -670,4 +670,188 @@ salt`,
   }),
 ];
 
-export const SEED_VERSION = 2;
+/** Third batch: snacks and treats. */
+export const SEED_RECIPES_V3: SeedRecipe[] = [
+  recipe({
+    title: "Chocolate Chip Cookies",
+    description: "Crisp edges, chewy middles, lots of chocolate.",
+    servings: 24, prepMinutes: 15, cookMinutes: 12, cuisine: "American",
+    tags: ["snack", "dessert", "baking", "sweet", "vegetarian"],
+    ingredients: `2 1/4 cups flour
+1 tsp baking soda
+1 tsp salt
+1 cup butter
+3/4 cup sugar
+3/4 cup brown sugar
+2 eggs
+1 tsp vanilla extract
+2 cups chocolate chips
+1 cup walnuts (optional)`,
+    steps: [
+      "Heat oven to 190°C / 375°F. Whisk flour, baking soda and salt.",
+      "Beat softened butter with both sugars until creamy, then beat in eggs and vanilla.",
+      "Mix in the flour, then fold in chocolate chips (and nuts).",
+      "Scoop tablespoon-sized balls onto lined trays and bake 9–11 minutes until golden at the edges. Cool on the tray 2 minutes.",
+    ],
+  }),
+  recipe({
+    title: "Hummus with Veggie Sticks",
+    description: "Silky homemade hummus with crunchy raw vegetables.",
+    servings: 4, prepMinutes: 10, cookMinutes: 0, cuisine: "Middle Eastern",
+    tags: ["snack", "no-cook", "vegan", "gluten-free"],
+    ingredients: `1 can chickpeas
+3 tbsp tahini
+1 lemon
+1 clove garlic
+3 tbsp olive oil
+2 carrots (raw)
+1 cucumber (raw)
+1 bell pepper (raw)
+salt`,
+    steps: [
+      "Blend drained chickpeas, tahini, lemon juice, garlic, oil, salt and 2–3 tbsp cold water until very smooth.",
+      "Cut the vegetables into sticks and serve with the hummus.",
+    ],
+  }),
+  recipe({
+    title: "Guacamole & Tortilla Chips",
+    description: "Chunky, zesty guacamole in five minutes.",
+    servings: 3, prepMinutes: 10, cookMinutes: 0, cuisine: "Mexican",
+    tags: ["snack", "no-cook", "vegan", "gluten-free"],
+    ingredients: `2 avocados
+1 lime
+1/4 red onion
+1 tomato
+coriander (optional)
+salt
+1 bag tortilla chips`,
+    steps: [
+      "Mash avocados with lime juice and salt.",
+      "Stir in finely chopped onion, tomato and coriander. Serve with chips.",
+    ],
+  }),
+  recipe({
+    title: "Greek Yogurt Parfait",
+    description: "Yogurt, fruit and crunchy oats — a protein-packed snack.",
+    servings: 1, prepMinutes: 5, cookMinutes: 0, cuisine: "American",
+    tags: ["snack", "breakfast", "no-cook", "vegetarian", "high-protein"],
+    ingredients: `1 cup greek yogurt
+1/2 cup berries
+1/4 cup oats
+1 tsp honey
+almonds (optional)`,
+    steps: ["Layer yogurt, berries and oats in a glass. Drizzle with honey and top with almonds."],
+  }),
+  recipe({
+    title: "Deviled Eggs",
+    description: "Creamy, tangy, party-perfect.",
+    servings: 6, prepMinutes: 15, cookMinutes: 10, cuisine: "American",
+    tags: ["snack", "vegetarian", "gluten-free", "high-protein"],
+    ingredients: `6 eggs
+3 tbsp mayonnaise
+1 tsp mustard
+paprika
+salt
+pepper`,
+    steps: [
+      "Hard-boil the eggs for 10 minutes, cool in cold water and peel.",
+      "Halve, mash the yolks with mayonnaise, mustard, salt and pepper, and pipe back in. Dust with paprika.",
+    ],
+  }),
+  recipe({
+    title: "Apple Slices with Peanut Butter",
+    description: "The easiest sweet-and-salty snack.",
+    servings: 1, prepMinutes: 3, cookMinutes: 0, cuisine: "American",
+    tags: ["snack", "no-cook", "vegan", "quick", "gluten-free"],
+    ingredients: `1 apple
+2 tbsp peanut butter
+cinnamon (optional)`,
+    steps: ["Slice the apple and serve with peanut butter for dipping. Dust with cinnamon if you like."],
+  }),
+  recipe({
+    title: "No-Bake Energy Balls",
+    description: "Oats, peanut butter and chocolate rolled into grab-and-go bites.",
+    servings: 12, prepMinutes: 15, cookMinutes: 0, cuisine: "American",
+    tags: ["snack", "no-cook", "vegetarian", "sweet", "meal-prep"],
+    ingredients: `1 cup oats
+1/2 cup peanut butter
+1/3 cup honey
+1/2 cup chocolate chips
+1 tsp vanilla extract`,
+    steps: [
+      "Stir everything together; chill 20 minutes.",
+      "Roll into walnut-sized balls. Keeps a week in the fridge.",
+    ],
+  }),
+  recipe({
+    title: "Crispy Roasted Chickpeas",
+    description: "Crunchy, spiced chickpeas — like chips, but with protein.",
+    servings: 4, prepMinutes: 5, cookMinutes: 30, cuisine: "Mediterranean",
+    tags: ["snack", "vegan", "gluten-free"],
+    ingredients: `1 can chickpeas
+1 tbsp olive oil
+1 tsp paprika
+1/2 tsp cumin
+salt`,
+    steps: [
+      "Heat oven to 200°C / 400°F. Drain and thoroughly dry the chickpeas.",
+      "Toss with oil, spices and salt; roast 25–30 minutes, shaking halfway, until crunchy.",
+    ],
+  }),
+  recipe({
+    title: "Stovetop Popcorn",
+    description: "Better than microwave bags, and ready in five minutes.",
+    servings: 3, prepMinutes: 1, cookMinutes: 5, cuisine: "American",
+    tags: ["snack", "vegan", "gluten-free", "quick"],
+    ingredients: `1/2 cup popcorn kernels
+2 tbsp oil
+salt
+butter (optional)`,
+    steps: [
+      "Heat oil with 3 kernels in a large lidded pot. When they pop, add the rest and cover.",
+      "Shake occasionally; when popping slows to 2 seconds apart, take off the heat. Season.",
+    ],
+  }),
+  recipe({
+    title: "Chicken Quesadilla",
+    description: "Crispy tortilla, melty cheese, leftover chicken.",
+    servings: 2, prepMinutes: 5, cookMinutes: 8, cuisine: "Mexican",
+    tags: ["snack", "lunch", "quick", "high-protein"],
+    ingredients: `2 tortillas
+1 cup cooked chicken
+1 cup cheddar
+1/2 bell pepper (optional)
+salsa (optional)`,
+    steps: [
+      "Fill one half of each tortilla with chicken, cheese and pepper; fold.",
+      "Cook in a dry pan 3–4 minutes a side until golden and melted. Cut into wedges.",
+    ],
+  }),
+  recipe({
+    title: "Tuna Salad Crackers",
+    description: "A quick, high-protein bite.",
+    servings: 2, prepMinutes: 5, cookMinutes: 0, cuisine: "American",
+    tags: ["snack", "no-cook", "high-protein", "quick"],
+    ingredients: `1 can tuna
+2 tbsp mayonnaise
+1 celery stalk (optional)
+1 lemon (optional)
+1 pack crackers
+pepper`,
+    steps: ["Mix tuna, mayonnaise, chopped celery, lemon and pepper. Spoon onto crackers."],
+  }),
+  recipe({
+    title: "Banana Peanut Butter Smoothie",
+    description: "Thick, creamy and filling.",
+    servings: 1, prepMinutes: 5, cookMinutes: 0, cuisine: "American",
+    tags: ["snack", "breakfast", "no-cook", "vegetarian", "quick"],
+    ingredients: `1 banana
+1 cup milk
+1 tbsp peanut butter
+1/4 cup oats (optional)
+1 tsp honey (optional)`,
+    steps: ["Blend everything until smooth. Add ice for a thicker shake."],
+  }),
+];
+
+export const SEED_VERSION = 3;

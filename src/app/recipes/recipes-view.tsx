@@ -10,6 +10,17 @@ import { Loading } from "@/components/page-state";
 import { contextFor, matchRecipe, tasteProfile } from "@/lib/recommend";
 import { useDb } from "@/lib/store";
 
+import { OnlineResults } from "./online-results";
+
+/** Every word of the query appears in the title, ignoring plurals ("cookie chocolate" → "Chocolate Chip Cookies"). */
+function titleHasAllWords(title: string, q: string): boolean {
+  const words = title.toLowerCase().split(/[^a-z]+/).map((w) => w.replace(/e?s$/, ""));
+  return q
+    .split(/\s+/)
+    .filter(Boolean)
+    .every((w) => words.some((t) => t.startsWith(w.replace(/e?s$/, ""))));
+}
+
 const SORTS = { match: "Best match", az: "A–Z", time: "Quickest", new: "Newest" } as const;
 
 export function RecipesView() {
@@ -35,6 +46,7 @@ export function RecipesView() {
       (r) =>
         !q ||
         r.title.toLowerCase().includes(q) ||
+        titleHasAllWords(r.title, q) ||
         r.cuisine.toLowerCase().includes(q) ||
         r.tags.some((t) => t.includes(q)) ||
         r.ingredients.some((i) => i.name.toLowerCase().includes(q) || normalizeName(i.name) === qName),
@@ -59,13 +71,21 @@ export function RecipesView() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="page-title">Recipe book</h1>
-          <p className="text-stone-500">{db.recipes.length} recipes · search by name, cuisine, tag or ingredient</p>
+          <p className="text-stone-500">
+            {db.recipes.length} recipes · search any dish — your book first, then recipes online
+          </p>
         </div>
         <Link href="/recipes/new" className="btn btn-primary">+ New recipe</Link>
       </div>
 
       <Form action="/recipes" className="card grid gap-3 p-4 sm:grid-cols-12" role="search">
-        <input name="q" type="search" defaultValue={q} placeholder="Search… e.g. chicken, pasta, quick" className="input sm:col-span-4" />
+        <input
+          name="q"
+          type="search"
+          defaultValue={q}
+          placeholder="Search any dish… e.g. chocolate chip cookie"
+          className="input sm:col-span-4"
+        />
         <select name="tag" defaultValue={tag} className="input sm:col-span-3">
           <option value="">All tags</option>
           {allTags.map((t) => (
@@ -85,8 +105,11 @@ export function RecipesView() {
         <button className="btn sm:col-span-1">Go</button>
       </Form>
 
+      {q && <h2 className="section-title">📖 In your recipe book</h2>}
       {results.length === 0 ? (
-        <div className="card p-8 text-center text-stone-500">No recipes match. Try a different search or add your own.</div>
+        <div className="card p-8 text-center text-stone-500">
+          {q ? `Nothing in your book matches “${q}”.` : "No recipes match. Try a different search or add your own."}
+        </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {results.map(({ recipe, match }) => (
@@ -94,6 +117,8 @@ export function RecipesView() {
           ))}
         </div>
       )}
+
+      {q.length >= 2 && <OnlineResults query={q} ctx={ctx} saved={db.recipes} />}
     </div>
   );
 }

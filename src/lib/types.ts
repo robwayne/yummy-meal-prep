@@ -73,7 +73,13 @@ export type Recipe = {
   disliked?: boolean;
   /** 1–5 */
   rating?: number;
-  source: "seed" | "user";
+  source: "seed" | "user" | "online";
+  /** Photo, for recipes found online. */
+  image?: string;
+  /** Where an online recipe came from (web page). */
+  sourceUrl?: string;
+  /** e.g. "mealdb:52772" or "dummyjson:3" — identifies an online recipe. */
+  externalId?: string;
   createdAt: string;
   updatedAt: string;
 };

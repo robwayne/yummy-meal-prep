@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
 import { Loading, NotFound } from "@/components/page-state";
+import { AddMissingButton } from "@/components/add-missing-button";
 import { BalanceRow, MatchBar, RecipeCard } from "@/components/recipe-card";
 import { deleteRecipe, rateRecipe, toggleDislike, toggleFavorite } from "@/lib/actions";
 import { adaptRecipe } from "@/lib/adapt";
@@ -185,9 +186,10 @@ export function RecipeView() {
             })}
           </ul>
           {match.missing.length > 0 && (
-            <div className="rounded-lg bg-stone-100 p-3 text-sm dark:bg-stone-800">
-              <p className="font-medium">Shopping list</p>
+            <div className="space-y-2 rounded-lg bg-stone-100 p-3 text-sm dark:bg-stone-800">
+              <p className="font-medium">Missing</p>
               <p className="text-stone-600 dark:text-stone-400">{match.missing.map((m) => m.name).join(", ")}</p>
+              <AddMissingButton title={recipe.title} missing={match.missing} />
             </div>
           )}
           <div className="border-t border-stone-200 pt-4 dark:border-stone-800">

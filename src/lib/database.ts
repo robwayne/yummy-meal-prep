@@ -1,4 +1,4 @@
-import { SEED_RECIPES, SEED_RECIPES_V2, SEED_VERSION, type SeedRecipe } from "./seed-recipes";
+import { SEED_RECIPES, SEED_RECIPES_V2, SEED_RECIPES_V3, SEED_VERSION, type SeedRecipe } from "./seed-recipes";
 import type { Database, Recipe } from "./types";
 
 export const DEFAULT_STAPLES = ["salt", "pepper", "water", "oil", "olive oil"];
@@ -20,7 +20,7 @@ export function createDatabase(): Database {
     seedVersion: SEED_VERSION,
     inventory: [],
     events: [],
-    recipes: [...SEED_RECIPES, ...SEED_RECIPES_V2].map((r) => fromSeed(r, now)),
+    recipes: [...SEED_RECIPES, ...SEED_RECIPES_V2, ...SEED_RECIPES_V3].map((r) => fromSeed(r, now)),
     cookLog: [],
     settings: { staples: DEFAULT_STAPLES, expiringSoonDays: 3 },
   };
@@ -35,9 +35,19 @@ export function migrateDatabase(db: Database): boolean {
   if ((db.seedVersion ?? 1) >= SEED_VERSION) return false;
   const now = new Date().toISOString();
   const titles = new Set(db.recipes.map((r) => r.title.toLowerCase()));
-  for (const r of SEED_RECIPES_V2) {
-    if (!titles.has(r.title.toLowerCase())) db.recipes.push(fromSeed(r, now));
+  const batches: [number, SeedRecipe[]][] = [
+    [2, SEED_RECIPES_V2],
+    [3, SEED_RECIPES_V3],
+  ];
+  for (const [version, batch] of batches) {
+    if ((db.seedVersion ?? 1) >= version) continue;
+    for (const r of batch) {
+      if (!titles.has(r.title.toLowerCase())) db.recipes.push(fromSeed(r, now));
+    }
   }
+  // Banana Bread became a snack.
+  const banana = db.recipes.find((r) => r.source === "seed" && r.title === "Banana Bread");
+  if (banana && !banana.tags.includes("snack")) banana.tags = ["snack", ...banana.tags];
   db.seedVersion = SEED_VERSION;
   return true;
 }

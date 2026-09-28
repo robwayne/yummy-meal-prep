@@ -154,7 +154,7 @@ export function GroceriesView() {
 
   const list = db.shoppingList ?? [];
   const low = runningLow(db);
-  const ctx = contextFor(db);
+  const ctx = { ...contextFor(db), kind: "meal" as const };
   const groceries = recipeGroceries(recommend(ctx, 3));
   const focus = FOCUS_INFO[ctx.focus ?? "balanced"];
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Form from "next/form";
 import Link from "next/link";
 
 import { ExpiryBadge } from "@/components/badges";
@@ -17,7 +18,7 @@ export function HomeView() {
   if (!db) return <Loading />;
 
   const soonDays = db.settings.expiringSoonDays;
-  const ctx = contextFor(db);
+  const ctx = { ...contextFor(db), kind: "meal" as const };
   const recs = recommend(ctx);
   const top = topPicks(recs);
   const vitalLow = runningLow(db).filter((l) => l.vital);
@@ -43,7 +44,17 @@ export function HomeView() {
         <p className="mt-2 max-w-xl text-brand-100">
           Keep track of what&apos;s in your fridge and cabinets, and get meal ideas that use it up before it goes off.
         </p>
-        <div className="mt-6 flex flex-wrap gap-3">
+        <Form action="/recipes" className="mt-5 flex max-w-lg gap-2" role="search">
+          <input
+            name="q"
+            type="search"
+            placeholder="Search any dish… e.g. chocolate chip cookie"
+            aria-label="Search recipes"
+            className="input border-white/40 bg-white text-stone-900"
+          />
+          <button className="btn shrink-0 border-white bg-white text-brand-700 hover:bg-brand-50">Search</button>
+        </Form>
+        <div className="mt-4 flex flex-wrap gap-3">
           <Link href="/cook" className="btn border-white bg-white text-brand-700 hover:bg-brand-50">
             Find something to cook
           </Link>

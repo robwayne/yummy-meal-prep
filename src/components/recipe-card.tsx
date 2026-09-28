@@ -88,21 +88,32 @@ export function RecipeCard({
   recipe: saved,
   match,
   feedback = false,
+  href,
+  badge,
 }: {
   recipe: Recipe;
   match?: RecipeMatch;
   /** Show Save / Not for me buttons (on recommendations). */
   feedback?: boolean;
+  /** Where the card links (defaults to the saved recipe page). */
+  href?: string;
+  /** Small label in the corner, e.g. "Online". */
+  badge?: string;
 }) {
   // Show the dish with your substitute protein when one is being used.
   const recipe = adaptRecipe(saved, match?.swap);
   return (
     <div className="card group flex flex-col transition hover:-translate-y-0.5 hover:border-brand-500/50 hover:shadow-md">
-      <Link href={`/recipes/view?id=${recipe.id}`} className="flex flex-1 flex-col gap-3 p-4">
+      <Link href={href ?? `/recipes/view?id=${recipe.id}`} className="flex flex-1 flex-col gap-3 p-4">
+        {recipe.image && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={recipe.image} alt="" loading="lazy" className="-mx-4 -mt-4 h-36 w-[calc(100%+2rem)] rounded-t-2xl object-cover" />
+        )}
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-semibold leading-snug group-hover:text-brand-700 dark:group-hover:text-brand-200">
             {recipe.title}
           </h3>
+          {badge && <span className="badge badge-muted shrink-0">{badge}</span>}
           {recipe.favorite && <span title="Saved" aria-label="Saved">❤️</span>}
           {recipe.disliked && <span title="Disliked" aria-label="Disliked">👎</span>}
         </div>

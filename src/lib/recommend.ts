@@ -57,12 +57,19 @@ export type RecommendContext = {
   /** This week's priority and diet (defaults: balanced, no restrictions). */
   focus?: Focus;
   diet?: Diet;
+  /** Only meals, only snacks, or anything (default). */
+  kind?: "meal" | "snack";
   /** What was recommended on previous days (to avoid suggesting the same thing forever). */
   recommendationLog?: RecommendationLogEntry[];
   now?: Date;
 };
 
 const DAY = 24 * 60 * 60 * 1000;
+
+/** Snacks and sweet treats, as opposed to meals. */
+export function isSnack(recipe: Recipe): boolean {
+  return recipe.tags.some((t) => t === "snack" || t === "dessert");
+}
 
 /** Everything the engine needs, taken from the saved database. */
 export function contextFor(db: Database, now = new Date()): RecommendContext {
@@ -309,6 +316,7 @@ export function rankRecipes(ctx: RecommendContext): RecipeMatch[] {
   const diet = ctx.diet ?? "everything";
   return ctx.recipes
     .filter((r) => !r.disliked && fitsDiet(r, diet))
+    .filter((r) => !ctx.kind || (ctx.kind === "snack") === isSnack(r))
     .map((r) => matchRecipe(r, ctx, profile))
     .sort((a, b) => b.score - a.score || a.missing.length - b.missing.length);
 }

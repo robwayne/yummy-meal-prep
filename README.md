@@ -27,12 +27,15 @@ A personal recipe book, kitchen inventory and meal recommender, built with **Nex
   - Recipes missing a food group suggest a side from your kitchen to round out the plate.
 - **👍 Save / 👎 Not for me** on every recommendation: saved dishes (and ones like them) rank higher; disliked dishes are never recommended and similar ones are nudged down. Undo from the recipe page; the Recipe book can filter Saved or Disliked.
 - **Meal history** (History → Meals): what was recommended each day, cooked, saved and disliked. Save it as a .txt and import it back any time. Dishes suggested on several recent days but never cooked take a rest so suggestions stay fresh.
+- **Search any dish**: the Recipe book (and the search box on Home) searches your book first, then free online recipe sites (TheMealDB and DummyJSON). Every result shows what you have and what's missing; open an online recipe to see it in full, save it to your book, or add its missing ingredients to the shopping list.
+- **Snacks & treats**: a Meals / Snacks switch on the Cook page; snacks stay out of meal recommendations.
+- **Add missing to shopping list** on every recipe.
 - **Groceries** (Shop tab)
   - **Inventory running low**: anything below its "low below" level (1 of its unit by default, so exactly 1 kg isn't low; tap to change per product, 0 = only when out), used up recently, or expired.
   - **Vital items** (☆ on any item): never-run-out products, always shown and flagged at the top when low or out, with an alert on Home.
   - **Recommended for recipes**: missing ingredients for meals you're close to making, ranked by how many dishes each unlocks.
   - **My list**: add suggestions or your own items, tick them off in the store, then add ticked items to your inventory in one tap.
-- **Recipe book**: comes with 32 starter recipes, including balanced meat and seafood plates. You can add your own, edit or delete them, search by name, cuisine, tag or ingredient, favourite them and rate them.
+- **Recipe book**: comes with 44 starter recipes, including balanced meat and seafood plates and 12 snacks and treats (chocolate chip cookies, hummus, energy balls…). You can add your own, edit or delete them, search by name, cuisine, tag or ingredient, favourite them and rate them.
   - Each recipe shows which ingredients you have, which you're short on and which are missing.
   - **"I cooked this"** takes the ingredients out of your inventory, with unit conversion and soonest-expiring stock used first. You can adjust the amounts before saving.
   - **"You might also like"**: similar recipes (content-based). The Cook page has **"Picked for you"**.
@@ -87,6 +90,7 @@ src/
     database.ts        empty/seeded database, backup validation
     ingredients.ts     line parser, name normalisation, matching, unit conversion
     recommend.ts       scoring, buckets, shopping list, similarity, cooking deductions
+    online-recipes.ts  online recipe search (TheMealDB, DummyJSON) → our recipe format
     meal-history.ts    meal history .txt format (recommended / cooked / saved / disliked)
     shopping.ts        running low, low thresholds, vital items, recipe groceries
     nutrition.ts       food groups, plate balance, weekly focus & diet scoring, side suggestions

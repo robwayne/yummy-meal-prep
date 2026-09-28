@@ -105,3 +105,28 @@ describe("meal history .txt", () => {
     expect(importMealHistory("hello").ok).toBe(false);
   });
 });
+
+describe("snacks and starter recipes", () => {
+  it("keeps snacks out of meal recommendations and vice versa", async () => {
+    const { isSnack } = await import("../recommend");
+    mutate((db) => {
+      db.recipes.push(recipe("s", "Wing Bites", "chicken wings", { tags: ["snack"] }));
+    });
+    const meals = recommend({ ...contextFor(getDb()), kind: "meal" }).ready.map((m) => m.recipe.id);
+    const snacks = recommend({ ...contextFor(getDb()), kind: "snack" }).ready.map((m) => m.recipe.id);
+    expect(meals).not.toContain("s");
+    expect(snacks).toEqual(["s"]);
+    expect(isSnack(getDb().recipes.find((r) => r.id === "s")!)).toBe(true);
+  });
+
+  it("adds snack recipes to older recipe books", async () => {
+    const { migrateDatabase } = await import("../database");
+    const db = { ...createDatabase(), seedVersion: 2 };
+    db.recipes = db.recipes.filter((r) => !r.tags.includes("snack") || r.title === "Banana Bread");
+    db.recipes.find((r) => r.title === "Banana Bread")!.tags = ["baking"];
+    expect(migrateDatabase(db)).toBe(true);
+    expect(db.recipes.some((r) => r.title === "Chocolate Chip Cookies")).toBe(true);
+    expect(db.recipes.find((r) => r.title === "Banana Bread")!.tags).toContain("snack");
+    expect(db.seedVersion).toBe(3);
+  });
+});
