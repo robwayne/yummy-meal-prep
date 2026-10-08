@@ -5,8 +5,8 @@ export const dynamic = "force-static";
 // Paths are relative to the manifest so they work under the GitHub Pages sub-path.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Yummy Meal Prep",
-    short_name: "Yummy",
+    name: "HungryHungryRob",
+    short_name: "HungryHungryRob",
     description: "Your recipe book, kitchen inventory and meal recommender.",
     start_url: "./",
     scope: "./",

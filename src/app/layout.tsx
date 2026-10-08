@@ -11,9 +11,9 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: { default: "Yummy Meal Prep", template: "%s · Yummy Meal Prep" },
+  title: { default: "HungryHungryRob", template: "%s · HungryHungryRob" },
   description: "Your recipe book, kitchen inventory and meal recommender in one place.",
-  appleWebApp: { capable: true, title: "Yummy", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "HungryHungryRob", statusBarStyle: "default" },
   formatDetection: { telephone: false },
 };
 
@@ -36,7 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))]">
             <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
               <span aria-hidden className="text-2xl">🥕</span>
-              Yummy Meal Prep
+              HungryHungryRob
             </Link>
             <Nav />
           </div>

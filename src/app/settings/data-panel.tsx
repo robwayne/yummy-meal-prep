@@ -11,7 +11,7 @@ function downloadBackup() {
   const url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
   const a = document.createElement("a");
   a.href = url;
-  a.download = `yummy-meal-prep-${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = `hungryhungryrob-backup-${new Date().toISOString().slice(0, 10)}.json`;
   document.body.appendChild(a);
   a.click();
   a.remove();

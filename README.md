@@ -1,8 +1,8 @@
-# Yummy Meal Prep 🥕
+# HungryHungryRob 🥕
 
 A personal recipe book, kitchen inventory and meal recommender, built with **Next.js 16** and **React 19**. It runs entirely in your browser (no server, no account), is built for iPhone, and is hosted on GitHub Pages.
 
-**Live app:** https://robwayne.github.io/yummy-meal-prep/
+**Live app:** https://robwayne.github.io/yummy-meal-prep/ (the address follows the GitHub repository name)
 
 ## Features
 

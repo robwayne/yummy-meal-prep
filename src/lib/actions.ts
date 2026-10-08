@@ -481,7 +481,7 @@ export function restoreBackup(json: string): ActionState {
   } catch {
     return { ok: false, message: "That file isn't valid JSON" };
   }
-  if (!isDatabase(parsed)) return { ok: false, message: "That doesn't look like a Yummy Meal Prep backup" };
+  if (!isDatabase(parsed)) return { ok: false, message: "That doesn't look like a HungryHungryRob backup" };
   migrateDatabase(parsed);
   replaceDb(parsed);
   return {

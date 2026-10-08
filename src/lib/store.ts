@@ -10,7 +10,9 @@ import type { Database } from "./types";
  *
  * Outside a browser (tests) it falls back to memory only.
  */
-export const STORAGE_KEY = "yummy-meal-prep:db";
+export const STORAGE_KEY = "hungryhungryrob:db";
+/** Where data was kept before the app was renamed; moved over on first load. */
+const LEGACY_KEYS = ["yummy-meal-prep:db"];
 
 let cache: Database | null = null;
 const listeners = new Set<() => void>();
@@ -35,7 +37,18 @@ function save(db: Database) {
 function load(): Database {
   if (hasStorage()) {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      let raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        // Carry data over from the old name, then tidy up.
+        for (const key of LEGACY_KEYS) {
+          const old = localStorage.getItem(key);
+          if (!old) continue;
+          localStorage.setItem(STORAGE_KEY, old);
+          localStorage.removeItem(key);
+          raw = old;
+          break;
+        }
+      }
       if (raw) {
         const parsed: unknown = JSON.parse(raw);
         if (isDatabase(parsed)) {

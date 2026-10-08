@@ -41,7 +41,7 @@ export function RecipeView() {
   const recipe = saved && adaptRecipe(saved, match?.swap);
 
   useEffect(() => {
-    if (recipe) document.title = `${recipe.title} · Yummy Meal Prep`;
+    if (recipe) document.title = `${recipe.title} · HungryHungryRob`;
   }, [recipe?.title]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!db) return <Loading />;

@@ -23,7 +23,7 @@ export function inventoryToText(items: InventoryItem[], now = new Date()): strin
   const sorted = [...items].sort(
     (a, b) => LOCATIONS.indexOf(a.location) - LOCATIONS.indexOf(b.location) || a.name.localeCompare(b.name),
   );
-  const header = `# Yummy Meal Prep inventory · ${now.toISOString().slice(0, 10)} · ${items.length} items`;
+  const header = `# HungryHungryRob inventory · ${now.toISOString().slice(0, 10)} · ${items.length} items`;
   return [header, ...sorted.map(lineFor)].join("\n");
 }
 

@@ -36,7 +36,7 @@ export function mealHistoryLines(db: Database): MealLine[] {
 export function mealHistoryToText(db: Database, now = new Date()): string {
   const lines = mealHistoryLines(db);
   return [
-    `# Yummy Meal Prep meal history · ${now.toISOString().slice(0, 10)} · ${lines.length} entries`,
+    `# HungryHungryRob meal history · ${now.toISOString().slice(0, 10)} · ${lines.length} entries`,
     "# date | recommended/cooked/saved/disliked | recipe | focus",
     ...lines.map((l) => [l.date, l.kind, l.title.replace(/\|/g, "/"), l.detail].filter(Boolean).join(" | ")),
   ].join("\n");
